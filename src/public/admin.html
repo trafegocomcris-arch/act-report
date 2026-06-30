@@ -102,7 +102,22 @@ tr:hover td{background:var(--hover-table);}
 </head>
 <body>
 
-<aside class="sidebar">
+<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;width:100%;background:var(--bg);padding:20px">
+  <div style="background:var(--bg-card);border:1px solid var(--borda);border-radius:16px;padding:40px;width:100%;max-width:400px;text-align:center">
+    <div style="margin-bottom:24px">
+      <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" style="height:40px;margin-bottom:12px" onerror="this.style.display='none'">
+      <h1 style="font-family:var(--fd);font-size:1.3rem;font-weight:900;letter-spacing:-0.5px">ACT<em style="font-style:normal;color:var(--ambar)">Report</em></h1>
+      <p style="color:var(--texto-ter);font-size:0.85rem;margin-top:4px">Relatórios de marketing digital</p>
+    </div>
+    <div id="loginError" style="color:var(--red);font-size:0.8rem;margin-bottom:10px;display:none"></div>
+    <div class="form-group"><label>Email</label><input id="loginEmail" type="email" placeholder="seu@email.com" style="text-align:center"></div>
+    <div class="form-group"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••••" style="text-align:center" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">Entrar</button>
+    <p style="color:var(--texto-ter);font-size:0.7rem;margin-top:12px">admin@actcontrol.com.br</p>
+  </div>
+</div>
+
+<aside class="sidebar" id="appShell" style="display:none">
   <div class="sidebar-header">
     <div class="sidebar-logo">
       <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" onerror="this.style.display='none'">
@@ -118,7 +133,7 @@ tr:hover td{background:var(--hover-table);}
   </nav>
 </aside>
 
-<div class="main">
+<div class="main" id="appShell" style="display:none">
   <div class="topbar">
     <h2 id="pageTitle">Dashboard</h2>
     <div class="user-info">
@@ -424,25 +439,52 @@ async function syncAccount(id) {
   setTimeout(() => { btn.textContent='Sinc.'; btn.disabled=false }, 2000)
 }
 
-async function init() {
-  if (!token) {
-    const email = prompt('Email:'); const password = prompt('Senha:')
-    if (email && password) {
-      const res = await api('/auth/login', {method:'POST', body: JSON.stringify({email, password})})
-      if (res.session?.access_token) {
-        token = res.session.access_token
-        localStorage.setItem('act_report_token', token)
-        document.getElementById('userEmail').textContent = email
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none'
+  document.querySelectorAll('#appShell').forEach(el => el.style.display = '')
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('loginError')
+  el.textContent = msg; el.style.display = 'block'
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value
+  const password = document.getElementById('loginPass').value
+  if (!email || !password) return showLoginError('Preencha email e senha')
+  document.getElementById('loginError').style.display = 'none'
+  try {
+    const res = await api('/auth/login', {method:'POST', body: JSON.stringify({email, password})})
+    if (res.session?.access_token) {
+      token = res.session.access_token
+      localStorage.setItem('act_report_token', token)
+      document.getElementById('userEmail').textContent = email
+      showApp()
+      await loadClients(); await loadReports(); await loadDashboards(); await loadAccounts()
+    } else {
+      const reg = await api('/auth/register', {method:'POST', body: JSON.stringify({email, password, name:'Admin'})})
+      if (reg.user) {
+        showLoginError('Cadastro feito! Verifique seu email para ativar a conta.')
       } else {
-        const reg = await api('/auth/register', {method:'POST', body: JSON.stringify({email, password, name:'Admin'})})
-        alert(reg.user ? 'Cadastro feito! Verifique seu email.' : 'Erro: '+(reg.error||'Falha'))
-        return
+        showLoginError(reg.error || 'Falha no login')
       }
-    } else { return }
+    }
+  } catch(e) { showLoginError('Erro de conexão') }
+}
+
+async function init() {
+  if (token) {
+    const me = await api('/auth/me')
+    if (me.user) {
+      document.getElementById('userEmail').textContent = me.user.email
+      document.getElementById('loginEmail').value = me.user.email
+      showApp()
+      await loadClients(); await loadReports(); await loadDashboards(); await loadAccounts()
+    } else {
+      localStorage.removeItem('act_report_token')
+    }
   }
-  const me = await api('/auth/me')
-  if (me.user) document.getElementById('userEmail').textContent = me.user.email
-  await loadClients(); await loadReports(); await loadDashboards(); await loadAccounts()
 }
 
 function logout() { localStorage.removeItem('act_report_token'); location.reload() }

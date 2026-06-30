@@ -67,6 +67,10 @@ app.get('/r/:token', (req, res) => {
   res.sendFile(path.join(__dirname, 'templates', 'shared-report.html'))
 })
 
+app.get('/', (req, res) => {
+  res.redirect('/admin')
+})
+
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'))
 })
