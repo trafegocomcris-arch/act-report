@@ -68,7 +68,7 @@ app.get('/r/:token', (req, res) => {
 })
 
 app.get('/', (req, res) => {
-  res.redirect('/admin')
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'))
 })
 
 app.get('/admin', (req, res) => {
