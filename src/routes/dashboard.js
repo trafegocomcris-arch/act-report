@@ -94,15 +94,19 @@ router.post('/create', authenticate, async (req, res) => {
 
 router.put('/:id', authenticate, async (req, res) => {
   const { title, config, is_public, password_hash } = req.body
+  const updates = { updated_at: new Date() }
+  if (title !== undefined) updates.title = title
+  if (config !== undefined) updates.config = config
+  if (is_public !== undefined) updates.is_public = is_public
+  if (password_hash !== undefined) updates.password_hash = password_hash
   const { data, error } = await supabase
     .from('dashboards')
-    .update({ title, config, is_public, password_hash, updated_at: new Date() })
+    .update(updates)
     .eq('id', req.params.id)
     .eq('user_id', req.user.id)
     .select()
-    .single()
   if (error) return res.status(400).json({ error: error.message })
-  res.json({ dashboard: data })
+  res.json({ dashboard: data?.[0] || updates })
 })
 
 router.get('/', authenticate, async (req, res) => {
