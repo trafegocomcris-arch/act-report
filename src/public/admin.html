@@ -288,11 +288,10 @@ let token = localStorage.getItem('act_report_token')
 let clients=[], reports=[], accounts=[], dashboards=[]
 
 async function api(path, opts={}) {
-  const res = await fetch(API+path, {
-    headers: {'Authorization':'Bearer '+token, 'Content-Type':'application/json', ...opts.headers},
-    ...opts
-  })
-  if (res.status===401) { localStorage.removeItem('act_report_token'); location.reload() }
+  const h = {'Content-Type':'application/json'}
+  if (token && path!=='/auth/login') h['Authorization'] = 'Bearer '+token
+  const res = await fetch(API+path, {...opts, headers:{...h, ...(opts.headers||{})}})
+  if (!res.ok) return {error:{message:'HTTP '+res.status+' '+res.statusText}}
   return res.json()
 }
 
@@ -467,15 +466,10 @@ async function doLogin() {
       showApp()
       loadClients().then(loadReports).then(loadDashboards).then(loadAccounts).catch(()=>{})
     } else {
-      const reg = await api('/auth/register', {method:'POST', body: JSON.stringify({email, password, name:'Admin'})})
-      if (reg.user) {
-        showLoginError('Cadastro feito! Verifique seu email para ativar a conta.')
-      } else {
-        showLoginError(reg.error || 'Falha no login')
-      }
+      showLoginError(res.error?.message||'Falha no login')
       btn.textContent = 'Entrar'; btn.disabled = false
     }
-  } catch(e) { showLoginError('Erro de conexão'); btn.textContent = 'Entrar'; btn.disabled = false }
+  } catch(e) { showLoginError('Erro: '+(e.message||'conexão')); btn.textContent = 'Entrar'; btn.disabled = false; console.error(e) }
 }
 
 async function init() {
