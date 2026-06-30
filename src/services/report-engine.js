@@ -15,75 +15,80 @@ export function generateReportHTML(data) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatório de Marketing - ${client?.name || 'Cliente'}</title>
+<link rel="icon" type="image/png" href="https://actcontrol.com.br/brand/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+body { font-family: 'Inter', sans-serif; background: #0E0E0E; color: #FFFFFF; -webkit-font-smoothing: antialiased; }
 .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
 .header {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: white; padding: 40px; border-radius: 20px; margin-bottom: 24px;
-  display: flex; justify-content: space-between; align-items: center;
+  background: linear-gradient(135deg, #0E0E0E 0%, #161616 100%);
+  border: 1px solid #222; border-radius: 16px; padding: 32px;
+  margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;
+  position: relative; overflow: hidden;
 }
-.header h1 { font-size: 28px; font-weight: 700; }
-.header .period { opacity: 0.8; margin-top: 8px; font-size: 14px; }
+.header::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, #F5B113, transparent);
+}
+.header .brand { display: flex; align-items: center; gap: 12px; }
+.header .brand img { height: 36px; width: auto; }
+.header .brand span { font-family: 'Manrope', sans-serif; font-weight: 900; font-size: 1.2rem; letter-spacing: -0.5px; }
+.header .brand em { font-style: normal; color: #F5B113; }
+.header .period { color: rgba(255,255,255,0.55); font-size: 14px; margin-top: 4px; }
 .header .client-info { text-align: right; }
-.header .client-info h2 { font-size: 20px; }
-.header .client-info p { opacity: 0.7; font-size: 13px; }
+.header .client-info h2 { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 700; }
+.header .client-info p { opacity: 0.55; font-size: 13px; }
 
 .kpi-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px; margin-bottom: 24px;
 }
 .kpi-card {
-  background: white; border-radius: 16px; padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: transform 0.2s;
+  background: #161616; border: 1px solid #222; border-radius: 12px; padding: 24px;
 }
-.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
-.kpi-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 8px; }
-.kpi-value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
-.kpi-sub { font-size: 13px; color: #888; margin-top: 4px; }
-.kpi-trend { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 8px; }
-.kpi-trend.up { background: #e6f7ed; color: #0d9488; }
-.kpi-trend.down { background: #fee2e2; color: #dc2626; }
+.kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.55); margin-bottom: 8px; }
+.kpi-value { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 800; color: #FFFFFF; }
+.kpi-sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 4px; }
 
 .section {
-  background: white; border-radius: 16px; padding: 32px;
-  margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  background: #161616; border: 1px solid #222; border-radius: 12px; padding: 28px;
+  margin-bottom: 24px;
 }
-.section h2 { font-size: 20px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #f0f2f5; }
+.section h2 { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #222; letter-spacing: -0.2px; }
 
 .chart-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
 }
-.chart-box { background: #f8f9fa; border-radius: 12px; padding: 20px; }
-.chart-box h3 { font-size: 14px; color: #666; margin-bottom: 16px; }
+.chart-box { background: #0E0E0E; border: 1px solid #222; border-radius: 8px; padding: 20px; }
+.chart-box h3 { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 16px; font-weight: 500; }
 .chart-box canvas { max-height: 250px; }
 
-.metrics-table { width: 100%; border-collapse: collapse; }
-.metrics-table th { text-align: left; padding: 12px; font-size: 12px; text-transform: uppercase; color: #666; border-bottom: 2px solid #f0f2f5; }
-.metrics-table td { padding: 12px; border-bottom: 1px solid #f0f2f5; font-size: 14px; }
-.metrics-table tr:hover { background: #f8f9fa; }
-.metrics-table .highlight { font-weight: 600; color: #1a1a2e; }
+.metrics-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.metrics-table th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.55); border-bottom: 1px solid #222; background: rgba(255,255,255,0.02); font-weight: 600; letter-spacing: 0.3px; }
+.metrics-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.metrics-table tr:hover td { background: rgba(255,255,255,0.02); }
+.metrics-table .highlight { font-weight: 600; color: #F5B113; }
 
-.insights-box { background: #f0f9ff; border-radius: 12px; padding: 20px; margin-top: 16px; border-left: 4px solid #0ea5e9; }
-.insights-box h3 { font-size: 14px; color: #0369a1; margin-bottom: 8px; }
-.insights-box p { font-size: 14px; color: #333; line-height: 1.6; }
+.insights-box { background: rgba(245,177,19,0.06); border: 1px solid rgba(245,177,19,0.25); border-radius: 12px; padding: 20px; margin-top: 16px; }
+.insights-box h3 { font-size: 14px; color: #F5B113; margin-bottom: 8px; }
+.insights-box p { font-size: 14px; color: rgba(255,255,255,0.78); line-height: 1.6; }
 
-.brand-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 0; margin-bottom: 8px;
-}
-.brand-bar .agency-name { font-weight: 600; font-size: 14px; color: #666; }
+.footer { text-align: center; padding: 20px; color: rgba(255,255,255,0.35); font-size: 12px; border-top: 1px solid #222; margin-top: 32px; }
+.footer strong { color: rgba(255,255,255,0.55); }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <div>
-      <h1>Relatório de Marketing Digital</h1>
-      <p class="period">Período: ${period?.start || 'N/A'} a ${period?.end || 'N/A'}</p>
+    <div class="brand">
+      <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" onerror="this.style.display='none'">
+      <span>ACT<em>Report</em></span>
+      <div>
+        <p class="period">Período: ${period?.start || 'N/A'} a ${period?.end || 'N/A'}</p>
+      </div>
     </div>
     <div class="client-info">
       <h2>${client?.name || 'Cliente'}</h2>
@@ -229,8 +234,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
     </div>
   </div>` : ''}
 
-  <div style="text-align:center;padding:20px;color:#888;font-size:13px">
-    <p>Relatório gerado por ACT Report — ${new Date().toLocaleString('pt-BR')}</p>
+  <div class="footer">
+    <p>Relatório gerado por <strong>ACT Report</strong> — ${new Date().toLocaleString('pt-BR')}</p>
   </div>
 </div>
 
@@ -257,9 +262,13 @@ function generateChartScripts(analytics, googleAds, metaMetrics, adsMetrics) {
   const campClicks = campaigns.map(c => c.clicks)
 
   return `
-const chartDefaults = { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { font: { family: 'Inter' } } } } };
+const chartDefaults = { responsive: true, maintainAspectRatio: true,
+  scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } },
+  plugins: { legend: { labels: { color: textColor, font: { family: 'Inter' } } } } };
 
-const colors = { blue: '#1a1a2e', teal: '#0d9488', orange: '#f59e0b', purple: '#7c3aed', pink: '#ec4899' };
+const colors = { blue: '#F5B113', teal: '#C48D0E', orange: '#F5B113', purple: '#222', pink: 'rgba(245,177,19,0.3)' };
+const textColor = 'rgba(255,255,255,0.55)';
+const gridColor = 'rgba(255,255,255,0.06)';
 
 // Meta Impressions x Clicks
 const ctx1 = document.getElementById('chartMetaImpressions')?.getContext('2d');
@@ -280,8 +289,8 @@ const ctx3 = document.getElementById('chartDaily')?.getContext('2d');
 if (ctx3) new Chart(ctx3, { type: 'line', data: {
   labels: [${dates.map(d => `'${d}'`).join(',')}],
   datasets: [
-    { label: 'Usuários', data: [${users.join(',')}], borderColor: colors.teal, tension: 0.3, fill: true, backgroundColor: 'rgba(13,148,136,0.1)' },
-    { label: 'Sessões', data: [${sessions.join(',')}], borderColor: colors.blue, tension: 0.3, fill: true, backgroundColor: 'rgba(26,26,46,0.05)' }
+    { label: 'Usuários', data: [${users.join(',')}], borderColor: colors.orange, tension: 0.3, fill: true, backgroundColor: 'rgba(245,177,19,0.08)' },
+    { label: 'Sessões', data: [${sessions.join(',')}], borderColor: colors.blue, tension: 0.3, fill: true, backgroundColor: 'rgba(245,177,19,0.04)' }
   ]
 }, options: { ...chartDefaults, scales: { y: { beginAtZero: true } } } });
 
@@ -306,7 +315,7 @@ if (ctx5) new Chart(ctx5, { type: 'bar', data: {
 const ctx6 = document.getElementById('chartGATraffic')?.getContext('2d');
 if (ctx6) new Chart(ctx6, { type: 'doughnut', data: {
   labels: ['Direto', 'Orgânico', 'Social', 'Pago', 'Email', 'Outros'],
-  datasets: [{ data: [25, 35, 15, 12, 8, 5], backgroundColor: [colors.blue, colors.teal, colors.orange, colors.purple, colors.pink, '#94a3b8'], borderWidth: 0 }]
+  datasets: [{ data: [25, 35, 15, 12, 8, 5], backgroundColor: ['#F5B113', '#C48D0E', '#222', 'rgba(245,177,19,0.3)', 'rgba(245,177,19,0.15)', '#333'], borderWidth: 0 }]
 }, options: { ...chartDefaults, cutout: '60%' } });`
 }
 
