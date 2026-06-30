@@ -27,13 +27,29 @@ app.use('/api/accounts', accountRoutes)
 app.use('/api/reports', reportRoutes)
 app.use('/api/dashboards', dashboardRoutes)
 
-app.get('/api/health', (req, res) => {
+import { supabase } from './config/supabase.js'
+
+app.get('/api/health', async (req, res) => {
+  let dbStatus = 'unknown'
+  let dbError = null
+  try {
+    const { data, error } = await supabase.from('clients').select('*').limit(1)
+    dbStatus = error ? 'erro: ' + error.message : 'ok'
+    dbError = error?.message || null
+  } catch (e) {
+    dbStatus = 'crash'
+    dbError = e.message
+  }
   res.json({
     status: 'ok',
     version: '1.0.0',
-    supabase_url_set: !!process.env.SUPABASE_URL,
-    supabase_key_set: !!process.env.SUPABASE_KEY,
-    supabase_service_key_set: !!process.env.SUPABASE_SERVICE_KEY
+    env: {
+      url: !!process.env.SUPABASE_URL,
+      key: !!process.env.SUPABASE_KEY,
+      service: !!process.env.SUPABASE_SERVICE_KEY
+    },
+    database: dbStatus,
+    db_error: dbError
   })
 })
 
