@@ -43,6 +43,12 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'))
 })
 
-app.listen(PORT, () => {
-  console.log(`ACT Report rodando em http://localhost:${PORT}`)
-})
+try {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`ACT Report rodando em http://0.0.0.0:${PORT}`)
+    console.log(`Supabase: ${process.env.SUPABASE_URL ? 'configurado' : 'FALTANDO!'}`)
+  })
+} catch (err) {
+  console.error('Erro ao iniciar servidor:', err)
+  process.exit(1)
+}

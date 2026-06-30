@@ -1,4 +1,3 @@
-import jwt from 'jsonwebtoken'
 import { supabase } from '../config/supabase.js'
 
 export async function authenticate(req, res, next) {
@@ -7,7 +6,9 @@ export async function authenticate(req, res, next) {
     return res.status(401).json({ error: 'Token não fornecido' })
   }
   const token = header.split(' ')[1]
-
+  if (!supabase || !supabase.auth) {
+    return res.status(500).json({ error: 'Supabase não configurado' })
+  }
   try {
     const { data, error } = await supabase.auth.getUser(token)
     if (error || !data.user) {
@@ -22,7 +23,7 @@ export async function authenticate(req, res, next) {
 
 export function optionalAuth(req, res, next) {
   const header = req.headers.authorization
-  if (!header || !header.startsWith('Bearer ')) {
+  if (!header || !header.startsWith('Bearer ') || !supabase?.auth) {
     req.user = null
     return next()
   }

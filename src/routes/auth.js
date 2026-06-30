@@ -3,6 +3,11 @@ import { supabase } from '../config/supabase.js'
 
 const router = Router()
 
+router.use((req, res, next) => {
+  if (!supabase?.auth) return res.status(500).json({ error: 'Supabase não configurado' })
+  next()
+})
+
 router.post('/login', async (req, res) => {
   const { email, password } = req.body
   if (!email || !password) {
