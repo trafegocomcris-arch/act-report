@@ -117,7 +117,8 @@ tr:hover td{background:var(--hover-table);}
   </div>
 </div>
 
-<aside class="sidebar" id="appShell" style="display:none">
+<div id="appShell" style="display:none;min-height:100vh">
+<aside class="sidebar">
   <div class="sidebar-header">
     <div class="sidebar-logo">
       <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" onerror="this.style.display='none'">
@@ -133,7 +134,7 @@ tr:hover td{background:var(--hover-table);}
   </nav>
 </aside>
 
-<div class="main" id="appShell" style="display:none">
+<div class="main">
   <div class="topbar">
     <h2 id="pageTitle">Dashboard</h2>
     <div class="user-info">
@@ -441,7 +442,8 @@ async function syncAccount(id) {
 
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none'
-  document.querySelectorAll('#appShell').forEach(el => el.style.display = '')
+  document.getElementById('appShell').style.display = ''
+  document.body.style.overflow = ''
 }
 
 function showLoginError(msg) {
@@ -454,6 +456,8 @@ async function doLogin() {
   const password = document.getElementById('loginPass').value
   if (!email || !password) return showLoginError('Preencha email e senha')
   document.getElementById('loginError').style.display = 'none'
+  const btn = document.querySelector('#loginScreen .btn-primary')
+  btn.textContent = 'Entrando...'; btn.disabled = true
   try {
     const res = await api('/auth/login', {method:'POST', body: JSON.stringify({email, password})})
     if (res.session?.access_token) {
@@ -461,7 +465,7 @@ async function doLogin() {
       localStorage.setItem('act_report_token', token)
       document.getElementById('userEmail').textContent = email
       showApp()
-      await loadClients(); await loadReports(); await loadDashboards(); await loadAccounts()
+      loadClients().then(loadReports).then(loadDashboards).then(loadAccounts).catch(()=>{})
     } else {
       const reg = await api('/auth/register', {method:'POST', body: JSON.stringify({email, password, name:'Admin'})})
       if (reg.user) {
@@ -469,8 +473,9 @@ async function doLogin() {
       } else {
         showLoginError(reg.error || 'Falha no login')
       }
+      btn.textContent = 'Entrar'; btn.disabled = false
     }
-  } catch(e) { showLoginError('Erro de conexão') }
+  } catch(e) { showLoginError('Erro de conexão'); btn.textContent = 'Entrar'; btn.disabled = false }
 }
 
 async function init() {
