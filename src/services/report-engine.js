@@ -26,7 +26,8 @@ export function generateReportHTML(data) {
   const brandAccent = branding?.accentColor || '#C48D0E'
 
   const styles = getStyles(brandColor)
-  const charts = getChartScripts(ads, m, ga, aDaily, gCampanhas, brandColor, brandAccent)
+  const hasIg = !!m.followers
+const charts = getChartScripts(ads, m, ga, aDaily, gCampanhas, brandColor, brandAccent, hasIg)
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -456,7 +457,7 @@ function getRegions() {
   ]
 }
 
-function getChartScripts(ads, meta, ga, daily, campaigns, brandColor, brandAccent) {
+function getChartScripts(ads, meta, ga, daily, campaigns, brandColor, brandAccent, hasIg) {
   const textColor = 'rgba(255,255,255,0.55)'
   const gridColor = 'rgba(255,255,255,0.06)'
 
@@ -468,9 +469,21 @@ function getChartScripts(ads, meta, ga, daily, campaigns, brandColor, brandAccen
   const ageLabels = ['13-17','18-24','25-34','35-44','45-54','55-64','65+']
   const ageReach = [1200, 18200, 28400, 19600, 9800, 4200, 1600]
   const ageImpressions = [2800, 45200, 78400, 51200, 23400, 9800, 3200]
-
   const genderReach = [41200, 47800]
-  const genderImpressions = [132000, 158000]
+
+  const igFollowers = hasIg ? `
+const fCtx=document.getElementById("chartFollowers")
+if(fCtx)new Chart(fCtx,{type:"line",data:{
+  labels:[${dates.map(d=>"'"+d+"'").join(',')}],
+  datasets:[{label:"Seguidores",data:[${dailyData.map((_,i)=>meta.followers-Math.floor(Math.random()*200+50*(30-i)/30)).join(',')}],borderColor:brand,tension:.3,fill:true,backgroundColor:brand+"1a"}]
+},options:{...cd,scales:{y:{beginAtZero:false}},plugins:{legend:{display:false}}}})
+
+const eCtx=document.getElementById("chartEngagement")
+if(eCtx)new Chart(eCtx,{type:"doughnut",data:{
+  labels:["Alcance","Impressoes","Visitas","Site"],
+  datasets:[{data:[${meta.reach||0},${meta.impressions||0},${meta.profile_views||0},${meta.website_clicks||0}],backgroundColor:[brand,dim,"rgba(255,255,255,0.15)","rgba(255,255,255,0.08)"],borderWidth:0}]
+},options:{...cd,cutout:"60%",plugins:{legend:{position:"bottom",labels:{color:tc,font:{size:11}}}}}})
+` : ''
 
   return `
 const tc='${textColor}', gc='${gridColor}', brand='${brandColor}', dim='${brandAccent}'
@@ -487,7 +500,7 @@ new Chart(document.getElementById('chartAge'),{type:'bar',data:{
   labels:[${ageLabels.map(l=>"'"+l+"'").join(',')}],
   datasets:[
     {label:'Alcance',data:[${ageReach.join(',')}],backgroundColor:'rgba(245,177,19,0.6)',borderRadius:3},
-    {label:'Impressões',data:[${ageImpressions.join(',')}],backgroundColor:'rgba(245,177,19,0.2)',borderRadius:3}
+    {label:'Impressoes',data:[${ageImpressions.join(',')}],backgroundColor:'rgba(245,177,19,0.2)',borderRadius:3}
   ]
 },options:{...cd,scales:{y:{beginAtZero:true}},plugins:{legend:{position:'top',labels:{color:tc,font:{size:10}}}}}})
 
@@ -501,34 +514,20 @@ new Chart(document.getElementById('chartDevice'),{type:'doughnut',data:{
   datasets:[{data:[78,16,6],backgroundColor:[brand,dim,'rgba(255,255,255,0.15)'],borderWidth:0}]
 },options:{...cd,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11}}}}}})
 
-${meta?.followers ? `
-const fCtx=document.getElementById('chartFollowers')
-if(fCtx)new Chart(fCtx,{type:'line',data:{
-  labels:[${dates.join(',')}],
-  datasets:[{label:'Seguidores',data:[${dailyData.map((_,i)=>meta.followers-Math.floor(Math.random()*200+50*(30-i)/30)).join(',')}],borderColor:brand,tension:.3,fill:true,backgroundColor:brand+'1a'}]
-},options:{...cd,scales:{y:{beginAtZero:false}},plugins:{legend:{display:false}}}})
-:''}
-
-${meta?.followers ? `
-const eCtx=document.getElementById('chartEngagement')
-if(eCtx)new Chart(eCtx,{type:'doughnut',data:{
-  labels:['Alcance','Impressões','Visitas','Site'],
-  datasets:[{data:[${meta.reach||0},${meta.impressions||0},${meta.profile_views||0},${meta.website_clicks||0}],backgroundColor:[brand,dim,'rgba(255,255,255,0.15)','rgba(255,255,255,0.08)'],borderWidth:0}]
-},options:{...cd,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11}}}}}})
-:''}
+${igFollowers}
 
 const gaCtx=document.getElementById('chartGADaily')
 if(gaCtx)new Chart(gaCtx,{type:'line',data:{
   labels:[${dates.map(d=>"'"+d+"'").join(',')}],
   datasets:[
-    {label:'Usuários',data:[${users.join(',')}],borderColor:brand,tension:.3,fill:true,backgroundColor:brand+'1a',pointRadius:2},
-    {label:'Sessões',data:[${sessions.join(',')}],borderColor:dim,tension:.3,fill:true,backgroundColor:dim+'1a',pointRadius:2}
+    {label:'Usuarios',data:[${users.join(',')}],borderColor:brand,tension:.3,fill:true,backgroundColor:brand+'1a',pointRadius:2},
+    {label:'Sessoes',data:[${sessions.join(',')}],borderColor:dim,tension:.3,fill:true,backgroundColor:dim+'1a',pointRadius:2}
   ]
 },options:{...cd,scales:{y:{beginAtZero:true}},plugins:{legend:{position:'top',labels:{color:tc,font:{size:10}}}}}})
 
 const trCtx=document.getElementById('chartGATraffic')
 if(trCtx)new Chart(trCtx,{type:'doughnut',data:{
-  labels:['Direto','Orgânico','Social','Pago','Email','Outros'],
+  labels:['Direto','Organico','Social','Pago','Email','Outros'],
   datasets:[{data:[25,35,15,12,8,5],backgroundColor:[brand,dim,'rgba(255,255,255,0.15)','rgba(255,255,255,0.1)','rgba(255,255,255,0.06)','#333'],borderWidth:0}]
 },options:{...cd,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11}}}}}})` 
 }
