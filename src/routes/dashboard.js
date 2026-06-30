@@ -150,10 +150,11 @@ async function fetchDashboardMetrics(clientId, config) {
       .limit(1)
       .single()
 
-    let accountData = { platform: account.platform, account_name: account.account_name, metrics: cache?.data || {} }
+    const raw = cache?.data || {}
+    const m = raw.totals || raw
+    let accountData = { platform: account.platform, account_name: account.account_name, metrics: raw }
     result.accounts.push(accountData)
 
-    const m = cache?.data || {}
     totalSpend += parseFloat(m.spend || m.cost || 0)
     totalImpressions += parseInt(m.impressions || 0)
     totalClicks += parseInt(m.clicks || 0)
