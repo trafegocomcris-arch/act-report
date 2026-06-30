@@ -28,7 +28,13 @@ app.use('/api/reports', reportRoutes)
 app.use('/api/dashboards', dashboardRoutes)
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '1.0.0' })
+  res.json({
+    status: 'ok',
+    version: '1.0.0',
+    supabase_url_set: !!process.env.SUPABASE_URL,
+    supabase_key_set: !!process.env.SUPABASE_KEY,
+    supabase_service_key_set: !!process.env.SUPABASE_SERVICE_KEY
+  })
 })
 
 app.get('/d/:slug', (req, res) => {
