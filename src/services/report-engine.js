@@ -1,6 +1,6 @@
-function fmt(n) { return (n||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) }
-function num(n) { return (n||0).toLocaleString('pt-BR') }
-function pct(n) { return (n||0).toFixed(2) + '%' }
+function fmt(n) { return Number(n||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) }
+function num(n) { return Number(n||0).toLocaleString('pt-BR') }
+function pct(n) { return Number(n||0).toFixed(2) + '%' }
 function pctChange(cur, prev) {
   if (!prev || prev==0) return ''
   const v = ((cur - prev) / prev * 100)
@@ -15,7 +15,7 @@ export function generateReportHTML(data) {
   const ads = meta?.ads || {}
   const ga = googleAds?.totals || {}
   const an = analytics?.totals || {}
-  const gCampaigns = googleAds?.campaigns || []
+  const gCampanhas = googleAds?.campaigns || []
   const aDaily = analytics?.daily || []
 
   const totalSpend = parseFloat(ads.spend||ads.cost||0) + parseFloat(ga.cost||0)
