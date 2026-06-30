@@ -1,0 +1,24 @@
+{
+  "name": "act-report",
+  "version": "1.0.0",
+  "description": "Gerador de relatórios de marketing digital + dashboard em tempo real",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "seed": "node src/seed.js",
+    "migrate": "node src/migrate.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "ejs": "^3.1.10",
+    "express": "^4.19.0",
+    "jsonwebtoken": "^9.0.0",
+    "puppeteer": "^22.0.0",
+    "uuid": "^9.0.0"
+  }
+}

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACT Report - Painel</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+.sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: #1a1a2e; color: white; padding: 24px 0; }
+.sidebar h1 { font-size: 18px; padding: 0 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar nav { margin-top: 20px; }
+.sidebar a { display: block; padding: 12px 20px; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; }
+.sidebar a:hover, .sidebar a.active { background: rgba(255,255,255,0.1); color: white; border-left: 3px solid #0d9488; }
+.main { margin-left: 240px; padding: 24px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.topbar h2 { font-size: 24px; font-weight: 700; }
+.user-info { font-size: 14px; color: #666; display: flex; align-items: center; gap: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; }
+.btn-primary { background: #1a1a2e; color: white; }
+.btn-primary:hover { background: #0d9488; }
+.btn-outline { background: transparent; border: 2px solid #1a1a2e; color: #1a1a2e; }
+.btn-outline:hover { background: #1a1a2e; color: white; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-danger { background: #dc2626; color: white; }
+.btn-danger:hover { background: #b91c1c; }
+.page { display: none; }
+.page.active { display: block; }
+.card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px; }
+.card h3 { font-size: 16px; margin-bottom: 16px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px; font-size: 12px; text-transform: uppercase; color: #666; border-bottom: 2px solid #f0f2f5; }
+td { padding: 12px; border-bottom: 1px solid #f0f2f5; font-size: 14px; }
+tr:hover td { background: #f8f9fa; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-success { background: #e6f7ed; color: #0d9488; }
+.badge-warning { background: #fef3c7; color: #d97706; }
+.badge-info { background: #e0f2fe; color: #0369a1; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 14px; font-family: inherit; }
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.15); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
+.modal.open { display: flex; }
+.modal-content { background: white; border-radius: 20px; padding: 32px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+.modal-content h3 { font-size: 20px; margin-bottom: 20px; }
+.empty-state { text-align: center; padding: 60px 20px; color: #888; }
+.empty-state p { font-size: 16px; margin-top: 8px; }
+.connected { color: #0d9488; }
+.not-connected { color: #dc2626; }
+.tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid #e5e7eb; }
+.tab { padding: 12px 24px; cursor: pointer; font-size: 14px; font-weight: 500; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: 0.2s; }
+.tab:hover { color: #1a1a2e; }
+.tab.active { color: #0d9488; border-bottom-color: #0d9488; }
+.report-preview { width: 100%; height: 600px; border: none; border-radius: 12px; }
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <h1>ACT Report</h1>
+  <nav>
+    <a class="active" onclick="showPage('dashboard-page')" id="nav-dashboard">Dashboard</a>
+    <a onclick="showPage('clients-page')" id="nav-clients">Clientes</a>
+    <a onclick="showPage('reports-page')" id="nav-reports">Relatórios</a>
+    <a onclick="showPage('dashboards-page')" id="nav-dashboards">Dashboards</a>
+    <a onclick="showPage('accounts-page')" id="nav-accounts">Conexões</a>
+  </nav>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <h2 id="page-title">Dashboard</h2>
+    <div class="user-info">
+      <span id="userEmail"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div id="dashboard-page" class="page active">
+    <div class="card">
+      <h3>Visão Geral</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px" id="kpiOverview">
+        <div class="loading" style="padding:40px;text-align:center;color:#888">Carregando...</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card"><h3>Clientes</h3><div id="clientSummary" style="font-size:42px;font-weight:700;color:#1a1a2e">0</div><div style="font-size:14px;color:#888">total</div></div>
+      <div class="card"><h3>Relatórios</h3><div id="reportSummary" style="font-size:42px;font-weight:700;color:#1a1a2e">0</div><div style="font-size:14px;color:#888">gerados</div></div>
+    </div>
+  </div>
+
+  <div id="clients-page" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>Gerenciar Clientes</h3>
+      <button class="btn btn-primary" onclick="openClientModal()">+ Novo Cliente</button>
+    </div>
+    <div class="card" id="clientList">
+      <div class="empty-state"><p>Nenhum cliente cadastrado</p></div>
+    </div>
+  </div>
+
+  <div id="reports-page" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>Relatórios</h3>
+      <button class="btn btn-primary" onclick="openReportModal()">+ Novo Relatório</button>
+    </div>
+    <div class="card" id="reportList">
+      <div class="empty-state"><p>Nenhum relatório gerado</p></div>
+    </div>
+  </div>
+
+  <div id="dashboards-page" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>Dashboards dos Clientes</h3>
+      <button class="btn btn-primary" onclick="openDashboardModal()">+ Novo Dashboard</button>
+    </div>
+    <div class="card" id="dashboardList">
+      <div class="empty-state"><p>Nenhum dashboard criado</p></div>
+    </div>
+  </div>
+
+  <div id="accounts-page" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>Conexões de API</h3>
+      <button class="btn btn-primary" onclick="openAccountModal()">+ Conectar Conta</button>
+    </div>
+    <div class="card" id="accountList">
+      <div class="empty-state"><p>Nenhuma conta conectada</p></div>
+    </div>
+  </div>
+</div>
+
+<div id="clientModal" class="modal">
+  <div class="modal-content">
+    <h3>Novo Cliente</h3>
+    <div class="form-group"><label>Nome*</label><input id="clientName" placeholder="Nome do cliente"></div>
+    <div class="form-group"><label>Empresa</label><input id="clientCompany" placeholder="Nome da empresa"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Email</label><input id="clientEmail" type="email" placeholder="email@cliente.com"></div>
+      <div class="form-group"><label>Telefone</label><input id="clientPhone" placeholder="(11) 99999-9999"></div>
+    </div>
+    <div class="form-group"><label>Website</label><input id="clientWebsite" placeholder="https://"></div>
+    <div class="form-group"><label>Observações</label><textarea id="clientNotes" rows="3"></textarea></div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('clientModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveClient()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="reportModal" class="modal">
+  <div class="modal-content">
+    <h3>Novo Relatório</h3>
+    <div class="form-group"><label>Cliente*</label><select id="reportClient"></select></div>
+    <div class="form-group"><label>Título</label><input id="reportTitle" placeholder="Relatório Mensal - Junho 2026"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Data Início*</label><input id="reportStart" type="date"></div>
+      <div class="form-group"><label>Data Fim*</label><input id="reportEnd" type="date"></div>
+    </div>
+    <div class="form-group"><label>Canais</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <label style="font-weight:400;font-size:13px"><input type="checkbox" value="meta" checked> Meta/Instagram</label>
+        <label style="font-weight:400;font-size:13px"><input type="checkbox" value="google_ads" checked> Google Ads</label>
+        <label style="font-weight:400;font-size:13px"><input type="checkbox" value="google_analytics" checked> Analytics</label>
+      </div>
+    </div>
+    <div id="reportProgress" style="display:none;padding:20px 0;text-align:center">
+      <div style="animation:spin 1s linear infinite;width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#0d9488;border-radius:50%;margin:0 auto 12px"></div>
+      <p style="color:#666;font-size:14px">Gerando relatório... buscando dados das APIs...</p>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('reportModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="generateReport()">Gerar Relatório</button>
+    </div>
+  </div>
+</div>
+
+<div id="dashboardModal" class="modal">
+  <div class="modal-content">
+    <h3>Novo Dashboard para Cliente</h3>
+    <div class="form-group"><label>Cliente*</label><select id="dashClient"></select></div>
+    <div class="form-group"><label>Título*</label><input id="dashTitle" placeholder="Dashboard - Minha Empresa"></div>
+    <div class="form-group"><label>Configuração</label>
+      <select id="dashTemplate">
+        <option value='{"charts":["overview","social","ads","analytics"],"branding":{}}'>Completo (Overview + Social + Ads + Analytics)</option>
+        <option value='{"charts":["overview","ads"],"branding":{}}'>Somente Anúncios</option>
+        <option value='{"charts":["overview","social"],"branding":{}}'>Somente Redes Sociais</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('dashboardModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createDashboard()">Criar Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<div id="accountModal" class="modal">
+  <div class="modal-content">
+    <h3>Conectar Conta</h3>
+    <div class="form-group"><label>Cliente</label><select id="acctClient"></select></div>
+    <div class="form-group"><label>Plataforma</label>
+      <select id="acctPlatform">
+        <option value="meta_instagram">Instagram</option>
+        <option value="meta_ads">Meta Ads</option>
+        <option value="google_ads">Google Ads</option>
+        <option value="google_analytics">Google Analytics 4</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Nome da Conta</label><input id="acctName" placeholder="Conta Principal"></div>
+    <div class="form-group"><label>Account ID</label><input id="acctId" placeholder="ID da conta na plataforma"></div>
+    <div class="form-group"><label>Access Token</label><input id="acctToken" placeholder="Token de acesso da API" type="password"></div>
+    <div style="font-size:12px;color:#888;margin-bottom:16px;background:#f0f9ff;padding:12px;border-radius:8px">
+      Para tokens de teste, deixe em branco que usaremos dados de demonstração.
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('accountModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="connectAccount()">Conectar</button>
+    </div>
+  </div>
+</div>
+
+<div id="reportViewer" class="modal" style="align-items:flex-start;padding-top:40px">
+  <div class="modal-content" style="max-width:1200px;height:90vh;display:flex;flex-direction:column">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>Relatório</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="copyShareLink()">Copiar Link</button>
+        <button class="btn btn-primary btn-sm" onclick="printReport()">Imprimir / PDF</button>
+        <button class="btn btn-outline btn-sm" onclick="closeModal('reportViewer')">Fechar</button>
+      </div>
+    </div>
+    <iframe id="reportIframe" class="report-preview" style="flex:1"></iframe>
+  </div>
+</div>
+
+<script>
+const BASE = window.location.pathname.startsWith('/dashact') ? '/dashact' : ''
+const API = window.location.origin + BASE
+let token = localStorage.getItem('act_report_token')
+let clients = [], reports = [], accounts = [], dashboards = []
+let charts = {}
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...opts.headers },
+    ...opts
+  })
+  if (res.status === 401) { localStorage.removeItem('act_report_token'); window.location.reload() }
+  return res.json()
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+  document.getElementById('nav-' + id.split('-')[0]).classList.add('active')
+  document.getElementById('page-title').textContent = document.getElementById('nav-' + id.split('-')[0]).textContent
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open') }
+function openModal(id) { document.getElementById(id).classList.add('open') }
+
+function openClientModal() {
+  document.getElementById('clientName').value = ''
+  document.getElementById('clientCompany').value = ''
+  document.getElementById('clientEmail').value = ''
+  document.getElementById('clientPhone').value = ''
+  document.getElementById('clientWebsite').value = ''
+  document.getElementById('clientNotes').value = ''
+  openModal('clientModal')
+}
+
+async function saveClient() {
+  const body = {
+    name: document.getElementById('clientName').value,
+    company: document.getElementById('clientCompany').value,
+    email: document.getElementById('clientEmail').value,
+    phone: document.getElementById('clientPhone').value,
+    website: document.getElementById('clientWebsite').value,
+    notes: document.getElementById('clientNotes').value
+  }
+  if (!body.name) return alert('Nome é obrigatório')
+  await api('/api/clients', { method: 'POST', body: JSON.stringify(body) })
+  closeModal('clientModal')
+  loadClients()
+}
+
+function openReportModal() {
+  const sel = document.getElementById('reportClient')
+  const end = new Date().toISOString().split('T')[0]
+  const start = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
+  document.getElementById('reportStart').value = start
+  document.getElementById('reportEnd').value = end
+  document.getElementById('reportTitle').value = ''
+  document.getElementById('reportProgress').style.display = 'none'
+  sel.innerHTML = clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
+  openModal('reportModal')
+}
+
+async function generateReport() {
+  const channels = [...document.querySelectorAll('#reportModal input[type=checkbox]:checked')].map(c => c.value)
+  const body = {
+    client_id: document.getElementById('reportClient').value,
+    title: document.getElementById('reportTitle').value || undefined,
+    period_start: document.getElementById('reportStart').value,
+    period_end: document.getElementById('reportEnd').value,
+    channels
+  }
+  document.getElementById('reportProgress').style.display = 'block'
+  const result = await api('/api/reports/generate', { method: 'POST', body: JSON.stringify(body) })
+  document.getElementById('reportProgress').style.display = 'none'
+  if (result.error) return alert('Erro: ' + result.error)
+  closeModal('reportModal')
+  loadReports()
+  viewReport(result.report.id)
+}
+
+function viewReport(id) {
+  document.getElementById('reportIframe').src = API + '/api/reports/' + id + '/html'
+  openModal('reportViewer')
+}
+
+function printReport() {
+  const iframe = document.getElementById('reportIframe')
+  iframe.contentWindow.print()
+}
+
+function copyShareLink() {
+  alert('Link de compartilhamento disponível na lista de relatórios')
+}
+
+function openDashboardModal() {
+  const sel = document.getElementById('dashClient')
+  sel.innerHTML = clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
+  openModal('dashboardModal')
+}
+
+async function createDashboard() {
+  const body = {
+    client_id: document.getElementById('dashClient').value,
+    title: document.getElementById('dashTitle').value,
+    config: JSON.parse(document.getElementById('dashTemplate').value)
+  }
+  if (!body.title) return alert('Título é obrigatório')
+  await api('/api/dashboards/create', { method: 'POST', body: JSON.stringify(body) })
+  closeModal('dashboardModal')
+  loadDashboards()
+}
+
+function openAccountModal() {
+  const sel = document.getElementById('acctClient')
+  sel.innerHTML = clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
+  openModal('accountModal')
+}
+
+async function connectAccount() {
+  const body = {
+    client_id: document.getElementById('acctClient').value,
+    platform: document.getElementById('acctPlatform').value,
+    account_name: document.getElementById('acctName').value,
+    account_id: document.getElementById('acctId').value,
+    access_token: document.getElementById('acctToken').value
+  }
+  await api('/api/accounts/connect', { method: 'POST', body: JSON.stringify(body) })
+  closeModal('accountModal')
+  loadAccounts()
+}
+
+async function deleteClient(id) {
+  if (!confirm('Remover este cliente?')) return
+  await api('/api/clients/' + id, { method: 'DELETE' })
+  loadClients()
+}
+
+async function deleteReport(id) {
+  if (!confirm('Remover este relatório?')) return
+  await api('/api/reports/' + id, { method: 'DELETE' })
+  loadReports()
+}
+
+async function deleteDashboard(id) {
+  if (!confirm('Remover este dashboard?')) return
+  await api('/api/dashboards/' + id, { method: 'DELETE' })
+  loadDashboards()
+}
+
+async function deleteAccount(id) {
+  if (!confirm('Desconectar esta conta?')) return
+  await api('/api/accounts/' + id, { method: 'DELETE' })
+  loadAccounts()
+}
+
+async function syncAccount(id) {
+  const btn = event.target
+  btn.textContent = 'Sincronizando...'
+  btn.disabled = true
+  await api('/api/accounts/' + id + '/sync', { method: 'POST' })
+  btn.textContent = 'Sincronizado ✓'
+  setTimeout(() => { btn.textContent = 'Sincronizar'; btn.disabled = false }, 2000)
+}
+
+async function loadClients() {
+  const res = await api('/api/clients')
+  clients = res.clients || []
+  const el = document.getElementById('clientList')
+  if (clients.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>Nenhum cliente cadastrado</p></div>'
+  } else {
+    el.innerHTML = `<table>
+      <thead><tr><th>Nome</th><th>Empresa</th><th>Email</th><th>Ações</th></tr></thead>
+      <tbody>${clients.map(c => `<tr>
+        <td><strong>${c.name}</strong></td>
+        <td>${c.company || '-'}</td>
+        <td>${c.email || '-'}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="deleteClient('${c.id}')">Remover</button></td>
+      </tr>`).join('')}</tbody>
+    </table>`
+  }
+  document.getElementById('clientSummary').textContent = clients.length
+}
+
+async function loadReports() {
+  const res = await api('/api/reports')
+  reports = res.reports || []
+  const el = document.getElementById('reportList')
+  if (reports.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>Nenhum relatório gerado</p></div>'
+  } else {
+    el.innerHTML = `<table>
+      <thead><tr><th>Título</th><th>Cliente</th><th>Período</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>${reports.map(r => `<tr>
+        <td><strong>${r.title}</strong></td>
+        <td>${r.clients?.name || '-'}</td>
+        <td>${r.period_start} a ${r.period_end}</td>
+        <td><span class="badge ${r.status === 'generated' ? 'badge-success' : 'badge-warning'}">${r.status}</span></td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-primary btn-sm" onclick="viewReport('${r.id}')">Ver</button>
+          <button class="btn btn-outline btn-sm" onclick="copyShareLink('${r.id}')" title="Copiar link">Link</button>
+          <button class="btn btn-outline btn-sm" onclick="deleteReport('${r.id}')" style="color:#dc2626">X</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`
+  }
+  document.getElementById('reportSummary').textContent = reports.length
+}
+
+async function loadDashboards() {
+  const res = await api('/api/dashboards')
+  dashboards = res.dashboards || []
+  const el = document.getElementById('dashboardList')
+  if (dashboards.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>Nenhum dashboard criado</p></div>'
+  } else {
+    el.innerHTML = `<table>
+      <thead><tr><th>Título</th><th>Cliente</th><th>Slug</th><th>Público</th><th>Ações</th></tr></thead>
+      <tbody>${dashboards.map(d => `<tr>
+        <td><strong>${d.title}</strong></td>
+        <td>${d.clients?.name || '-'}</td>
+        <td><a href="${BASE}/d/${d.slug}" target="_blank">${d.slug}</a></td>
+        <td><span class="badge ${d.is_public ? 'badge-success' : 'badge-warning'}">${d.is_public ? 'Público' : 'Privado'}</span></td>
+        <td><button class="btn btn-outline btn-sm" onclick="deleteDashboard('${d.id}')">Remover</button></td>
+      </tr>`).join('')}</tbody>
+    </table>`
+  }
+}
+
+async function loadAccounts() {
+  if (clients.length === 0) {
+    document.getElementById('accountList').innerHTML = '<div class="empty-state"><p>Cadastre um cliente primeiro</p></div>'
+    return
+  }
+  let allAccounts = []
+  for (const c of clients) {
+    const res = await api('/api/accounts/client/' + c.id)
+    allAccounts = allAccounts.concat((res.accounts || []).map(a => ({ ...a, client_name: c.name })))
+  }
+  accounts = allAccounts
+  const el = document.getElementById('accountList')
+  if (accounts.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>Nenhuma conta conectada</p></div>'
+  } else {
+    el.innerHTML = `<table>
+      <thead><tr><th>Cliente</th><th>Plataforma</th><th>Conta</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>${accounts.map(a => `<tr>
+        <td>${a.client_name}</td>
+        <td><span class="badge badge-info">${a.platform}</span></td>
+        <td>${a.account_name || a.account_id || '-'}</td>
+        <td><span class="${a.connected ? 'connected' : 'not-connected'}">●</span> ${a.connected ? 'Conectado' : 'Demo'}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-outline btn-sm" onclick="syncAccount('${a.id}')">Sincronizar</button>
+          <button class="btn btn-outline btn-sm" onclick="deleteAccount('${a.id}')" style="color:#dc2626">X</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`
+  }
+}
+
+async function loadOverview() {
+  const el = document.getElementById('kpiOverview')
+  const totalClients = clients.length
+  const totalReports = reports.length
+  const totalAccounts = accounts.length
+  el.innerHTML = `
+    <div class="card" style="padding:16px;text-align:center"><div style="font-size:13px;color:#888">Clientes</div><div style="font-size:28px;font-weight:700">${totalClients}</div></div>
+    <div class="card" style="padding:16px;text-align:center"><div style="font-size:13px;color:#888">Relatórios</div><div style="font-size:28px;font-weight:700">${totalReports}</div></div>
+    <div class="card" style="padding:16px;text-align:center"><div style="font-size:13px;color:#888">Contas Conectadas</div><div style="font-size:28px;font-weight:700">${totalAccounts}</div></div>
+    <div class="card" style="padding:16px;text-align:center"><div style="font-size:13px;color:#888">Dashboards</div><div style="font-size:28px;font-weight:700">${dashboards.length}</div></div>
+  `
+}
+
+async function init() {
+  if (!token) {
+    const email = prompt('Email:')
+    const password = prompt('Senha:')
+    if (email && password) {
+      const res = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+      if (res.session?.access_token) {
+        token = res.session.access_token
+        localStorage.setItem('act_report_token', token)
+        document.getElementById('userEmail').textContent = email
+      } else {
+        const reg = await api('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name: 'Admin' }) })
+        if (reg.user) {
+          alert('Cadastro realizado! Verifique seu email para confirmar. Após confirmar, recarregue a página.')
+        } else {
+          alert('Erro: ' + (reg.error || 'Falha ao autenticar'))
+        }
+        return
+      }
+    } else { return }
+  }
+
+  const me = await api('/auth/me')
+  if (me.user) {
+    document.getElementById('userEmail').textContent = me.user.email
+  }
+
+  await loadClients()
+  await loadReports()
+  await loadDashboards()
+  await loadAccounts()
+  loadOverview()
+}
+
+function logout() {
+  localStorage.removeItem('act_report_token')
+  window.location.reload()
+}
+
+init()
+</script>
+</body>
+</html>

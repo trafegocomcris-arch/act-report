@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+.header {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: white; padding: 32px 40px; border-radius: 20px;
+  margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;
+}
+.header h1 { font-size: 24px; font-weight: 700; }
+.header .subtitle { opacity: 0.7; font-size: 14px; margin-top: 4px; }
+.header .time { font-size: 12px; opacity: 0.5; }
+
+.kpi-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 24px;
+}
+.kpi-card {
+  background: white; border-radius: 16px; padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.kpi-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 6px; }
+.kpi-card .value { font-size: 26px; font-weight: 700; color: #1a1a2e; }
+.kpi-card .sub { font-size: 12px; color: #888; margin-top: 4px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+@media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.card {
+  background: white; border-radius: 16px; padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.card h3 { font-size: 16px; margin-bottom: 16px; color: #1a1a2e; }
+.card canvas { max-height: 250px; }
+
+.platform-list { margin-top: 16px; }
+.platform-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px;
+}
+.platform-item .name { font-weight: 600; font-size: 14px; }
+.platform-item .status { font-size: 12px; }
+.status-online { color: #0d9488; }
+.status-offline { color: #dc2626; }
+
+.loading { text-align: center; padding: 80px 20px; color: #888; }
+.loading .spinner {
+  width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #0d9488;
+  border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.footer { text-align: center; padding: 24px; color: #888; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Carregando dashboard...</p>
+  </div>
+
+  <div id="content" style="display:none">
+    <div class="header">
+      <div>
+        <h1 id="dashTitle">Dashboard</h1>
+        <p class="subtitle" id="dashClient">Cliente</p>
+      </div>
+      <div class="time" id="dashTime"></div>
+    </div>
+
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi-card"><div class="label">Gasto Total</div><div class="value" id="kpiSpend">R$ 0</div><div class="sub">Meta Ads + Google Ads</div></div>
+      <div class="kpi-card"><div class="label">Impressões</div><div class="value" id="kpiImpressions">0</div><div class="sub">Total de exibições</div></div>
+      <div class="kpi-card"><div class="label">Cliques</div><div class="value" id="kpiClicks">0</div><div class="sub">Total de cliques</div></div>
+      <div class="kpi-card"><div class="label">Conversões</div><div class="value" id="kpiConversions">0</div><div class="sub">Total de conversões</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><h3>Gasto por Plataforma</h3><canvas id="chartSpend"></canvas></div>
+      <div class="card"><h3>Performance Geral</h3><canvas id="chartPerformance"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3>Plataformas Conectadas</h3>
+      <div class="platform-list" id="platformList"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Dashboard em tempo real — Dados atualizados automaticamente
+  </div>
+</div>
+
+<script>
+const pathParts = window.location.pathname.split('/d/')
+const slug = pathParts[1] || pathParts[0].split('/dashact/d/')[1]
+const BASE = window.location.pathname.startsWith('/dashact') ? '/dashact' : ''
+let charts = {}
+
+async function load() {
+  try {
+    const res = await fetch(window.location.origin + BASE + '/api/dashboards/client/' + slug)
+    if (!res.ok) throw new Error('Dashboard não encontrado')
+    const data = await res.json()
+    if (!data.dashboard) throw new Error('Sem dados')
+    render(data.dashboard)
+  } catch (e) {
+    document.getElementById('loading').innerHTML = `
+      <p style="font-size:20px;font-weight:600;color:#dc2626">Dashboard não encontrado</p>
+      <p style="color:#888;margin-top:8px">${e.message}</p>
+      <p style="color:#888;margin-top:4px">Verifique o link ou solicite um novo ao seu consultor.</p>`
+  }
+}
+
+function render(dashboard) {
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
+
+  document.getElementById('dashTitle').textContent = dashboard.title || 'Dashboard'
+  document.getElementById('dashClient').textContent = dashboard.client?.name || 'Cliente'
+  document.getElementById('dashTime').textContent = 'Atualizado em ' + new Date(dashboard.updated_at || Date.now()).toLocaleString('pt-BR')
+
+  const metrics = dashboard.metrics?.overview
+  if (metrics) {
+    document.getElementById('kpiSpend').textContent = 'R$ ' + (metrics.total_spend || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})
+    document.getElementById('kpiImpressions').textContent = (metrics.total_impressions || 0).toLocaleString('pt-BR')
+    document.getElementById('kpiClicks').textContent = (metrics.total_clicks || 0).toLocaleString('pt-BR')
+    document.getElementById('kpiConversions').textContent = (metrics.total_conversions || 0).toLocaleString('pt-BR')
+  }
+
+  const accounts = dashboard.metrics?.accounts || []
+  const platformList = document.getElementById('platformList')
+  if (accounts.length === 0) {
+    platformList.innerHTML = '<p style="color:#888;font-size:14px">Nenhuma plataforma conectada ainda.</p>'
+  } else {
+    platformList.innerHTML = accounts.map(a => `
+      <div class="platform-item">
+        <span class="name">${a.account_name || a.platform}</span>
+        <span class="status ${a.metrics?.fetched_at ? 'status-online' : 'status-offline'}">
+          ${a.metrics?.fetched_at ? 'Dados atualizados' : 'Aguardando dados'}
+        </span>
+      </div>
+    `).join('')
+  }
+
+  renderCharts(metrics)
+}
+
+function renderCharts(metrics) {
+  Object.values(charts).forEach(c => c?.destroy())
+  charts = {}
+
+  if (!metrics) return
+
+  const ctx1 = document.getElementById('chartSpend')?.getContext('2d')
+  if (ctx1) {
+    charts.spend = new Chart(ctx1, {
+      type: 'doughnut',
+      data: {
+        labels: ['Meta Ads', 'Google Ads'],
+        datasets: [{ data: [metrics.total_spend || 0, metrics.total_spend || 0], backgroundColor: ['#1a1a2e', '#0d9488'], borderWidth: 0 }]
+      },
+      options: { responsive: true, maintainAspectRatio: true, cutout: '65%',
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter' } } } } }
+    })
+  }
+
+  const ctx2 = document.getElementById('chartPerformance')?.getContext('2d')
+  if (ctx2) {
+    charts.perf = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: ['Impressões', 'Cliques', 'Conversões'],
+        datasets: [{ data: [metrics.total_impressions || 0, metrics.total_clicks || 0, metrics.total_conversions || 0],
+          backgroundColor: ['#1a1a2e', '#0d9488', '#f59e0b'], borderRadius: 6 }]
+      },
+      options: { responsive: true, maintainAspectRatio: true,
+        scales: { y: { beginAtZero: true } },
+        plugins: { legend: { display: false } } }
+    })
+  }
+}
+
+setInterval(load, 60000)
+load()
+</script>
+</body>
+</html>
