@@ -27,29 +27,35 @@ app.use('/api/accounts', accountRoutes)
 app.use('/api/reports', reportRoutes)
 app.use('/api/dashboards', dashboardRoutes)
 
-import { supabase } from './config/supabase.js'
+import { supabase, supabaseAdmin } from './config/supabase.js'
 
 app.get('/api/health', async (req, res) => {
-  let dbStatus = 'unknown'
-  let dbError = null
+  let dbStatus = 'unknown', dbError = null
+  let adminStatus = 'unknown', adminError = null
   try {
     const { data, error } = await supabase.from('clients').select('*').limit(1)
-    dbStatus = error ? 'erro: ' + error.message : 'ok'
+    dbStatus = error ? 'erro:' + error.message : 'ok'
     dbError = error?.message || null
-  } catch (e) {
-    dbStatus = 'crash'
-    dbError = e.message
-  }
+  } catch (e) { dbStatus = 'crash'; dbError = e.message }
+  try {
+    const { data, error } = await supabaseAdmin.from('clients').select('*').limit(1)
+    adminStatus = error ? 'erro:' + error.message : 'ok'
+    adminError = error?.message || null
+  } catch (e) { adminStatus = 'crash'; adminError = e.message }
   res.json({
     status: 'ok',
     version: '1.0.0',
     env: {
       url: !!process.env.SUPABASE_URL,
       key: !!process.env.SUPABASE_KEY,
-      service: !!process.env.SUPABASE_SERVICE_KEY
+      key_starts: (process.env.SUPABASE_KEY || 'vazio').substring(0, 3),
+      service: !!process.env.SUPABASE_SERVICE_KEY,
+      service_starts: (process.env.SUPABASE_SERVICE_KEY || 'vazio').substring(0, 3)
     },
-    database: dbStatus,
-    db_error: dbError
+    anon_db: dbStatus,
+    anon_error: dbError,
+    admin_db: adminStatus,
+    admin_error: adminError
   })
 })
 
