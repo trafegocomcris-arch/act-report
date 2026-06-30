@@ -85,7 +85,7 @@ body { font-family: 'Inter', sans-serif; background: #0E0E0E; color: #FFFFFF; -w
   <div class="header">
     <div class="brand">
       <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" onerror="this.style.display='none'">
-      <span>ACT<em>Report</em></span>
+      <span><em style="font-style:normal;color:#F5B113">Report</em>ACT</span>
       <div>
         <p class="period">Período: ${period?.start || 'N/A'} a ${period?.end || 'N/A'}</p>
       </div>
@@ -235,7 +235,7 @@ body { font-family: 'Inter', sans-serif; background: #0E0E0E; color: #FFFFFF; -w
   </div>` : ''}
 
   <div class="footer">
-    <p>Relatório gerado por <strong>ACT Report</strong> — ${new Date().toLocaleString('pt-BR')}</p>
+    <p>Relatório gerado por <strong>ReportACT</strong> — ${new Date().toLocaleString('pt-BR')}</p>
   </div>
 </div>
 

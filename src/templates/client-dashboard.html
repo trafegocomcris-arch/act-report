@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-<title>Dashboard ACT Report</title>
+<title>Dashboard ReportACT</title>
 <link rel="icon" type="image/png" href="https://actcontrol.com.br/brand/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -67,7 +67,7 @@ body{font-family:var(--fb);background:var(--bg);color:#fff;min-height:100vh;-web
       <div class="header-top">
         <div class="brand">
           <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" onerror="this.style.display='none'">
-          <span>ACT<em>Report</em></span>
+          <span><em style="font-style:normal;color:var(--ambar)">Report</em>ACT</span>
         </div>
         <div class="time" id="dashTime"></div>
       </div>
@@ -93,13 +93,13 @@ body{font-family:var(--fb);background:var(--bg);color:#fff;min-height:100vh;-web
     </div>
   </div>
 
-  <div class="footer">ACT Report — Dashboard em tempo real</div>
+  <div class="footer">ReportACT — Dashboard em tempo real</div>
 </div>
 
 <script>
 const pathParts = window.location.pathname.split('/d/')
 const slug = pathParts[1] || pathParts[0].split('/dashact/d/')[1]
-const BASE = window.location.pathname.startsWith('/dashact') ? '/dashact' : ''
+const BASE = window.location.pathname.startsWith('/reportact') ? '/reportact' : window.location.pathname.startsWith('/dashact') ? '/dashact' : ''
 let charts = {}
 
 async function load() {

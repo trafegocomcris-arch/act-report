@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>ACT Report — Relatórios</title>
+<title>ReportACT — Relatórios</title>
 <link rel="icon" type="image/png" href="https://actcontrol.com.br/brand/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -106,7 +106,7 @@ tr:hover td{background:var(--hover-table);}
   <div style="background:var(--bg-card);border:1px solid var(--borda);border-radius:16px;padding:40px;width:100%;max-width:400px;text-align:center">
     <div style="margin-bottom:24px">
       <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" style="height:40px;margin-bottom:12px" onerror="this.style.display='none'">
-      <h1 style="font-family:var(--fd);font-size:1.3rem;font-weight:900;letter-spacing:-0.5px">ACT<em style="font-style:normal;color:var(--ambar)">Report</em></h1>
+      <h1 style="font-family:var(--fd);font-size:1.3rem;font-weight:900;letter-spacing:-0.5px"><em style="font-style:normal;color:var(--ambar)">Report</em>ACT</h1>
       <p style="color:var(--texto-ter);font-size:0.85rem;margin-top:4px">Relatórios de marketing digital</p>
     </div>
     <div id="loginError" style="color:var(--red);font-size:0.8rem;margin-bottom:10px;display:none"></div>
@@ -121,7 +121,7 @@ tr:hover td{background:var(--hover-table);}
   <div class="sidebar-header">
     <div class="sidebar-logo">
       <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" onerror="this.style.display='none'">
-      <span>ACT<em>Report</em></span>
+      <span><em style="font-style:normal;color:var(--ambar)">Report</em>ACT</span>
     </div>
   </div>
   <nav class="sidebar-nav" id="nav">
@@ -281,7 +281,7 @@ tr:hover td{background:var(--hover-table);}
 <script>
 @keyframes spin{to{transform:rotate(360deg)}}
 
-const BASE = window.location.pathname.startsWith('/dashact') ? '/dashact' : ''
+const BASE = window.location.pathname.startsWith('/reportact') ? '/reportact' : window.location.pathname.startsWith('/dashact') ? '/dashact' : ''
 const API = window.location.origin + BASE
 let token = localStorage.getItem('act_report_token')
 let clients=[], reports=[], accounts=[], dashboards=[]
