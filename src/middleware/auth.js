@@ -1,38 +1,34 @@
-import { supabase } from '../config/supabase.js'
+const jwt = require('jsonwebtoken')
 
-export async function authenticate(req, res, next) {
-  const header = req.headers.authorization
-  if (!header || !header.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token não fornecido' })
-  }
-  const token = header.split(' ')[1]
-  if (!supabase || !supabase.auth) {
-    return res.status(500).json({ error: 'Supabase não configurado' })
-  }
+const JWT_SECRET = process.env.JWT_SECRET || 'reportact-jwt-secret-2026'
+
+function generateToken(user) {
+  return jwt.sign(
+    { id: user.id, email: user.email },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  )
+}
+
+function verifyToken(token) {
   try {
-    const { data, error } = await supabase.auth.getUser(token)
-    if (error || !data.user) {
-      return res.status(401).json({ error: 'Token inválido' })
-    }
-    req.user = data.user
-    next()
+    return jwt.verify(token, JWT_SECRET)
   } catch {
-    return res.status(401).json({ error: 'Erro de autenticação' })
+    return null
   }
 }
 
-export function optionalAuth(req, res, next) {
-  const header = req.headers.authorization
-  if (!header || !header.startsWith('Bearer ') || !supabase?.auth) {
-    req.user = null
-    return next()
+function authMiddleware(req, res, next) {
+  const auth = req.headers.authorization
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return res.status(401).json({ error: { message: 'Token não fornecido' } })
   }
-  const token = header.split(' ')[1]
-  supabase.auth.getUser(token).then(({ data }) => {
-    req.user = data?.user || null
-    next()
-  }).catch(() => {
-    req.user = null
-    next()
-  })
+  const decoded = verifyToken(auth.slice(7))
+  if (!decoded) {
+    return res.status(401).json({ error: { message: 'Token inválido ou expirado' } })
+  }
+  req.user = decoded
+  next()
 }
+
+module.exports = { generateToken, verifyToken, authMiddleware }

@@ -1,86 +1,97 @@
-import express from 'express'
-import cors from 'cors'
-import dotenv from 'dotenv'
-import path from 'path'
-import { fileURLToPath } from 'url'
+require('dotenv').config()
+const express = require('express')
+const cors = require('cors')
+const helmet = require('helmet')
+const morgan = require('morgan')
+const path = require('path')
+const fs = require('fs')
 
-import authRoutes from './routes/auth.js'
-import clientRoutes from './routes/clients.js'
-import accountRoutes from './routes/accounts.js'
-import reportRoutes from './routes/reports.js'
-import dashboardRoutes from './routes/dashboard.js'
+const { supabase } = require('./lib/db')
 
-dotenv.config()
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3001
 
-app.use(cors())
-app.use(express.json({ limit: '50mb' }))
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}))
+app.use(cors({ origin: '*', credentials: true }))
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
+app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
-app.use(express.static(path.join(__dirname, 'public')))
+
+app.use((req, res, next) => {
+  res.set('X-Powered-By', 'ReportACT')
+  next()
+})
+
+const authRoutes = require('./routes/auth')
+const clientRoutes = require('./routes/clients')
+const reportRoutes = require('./routes/reports')
+const dashboardRoutes = require('./routes/dashboards')
+const accountRoutes = require('./routes/accounts')
+const publicRoutes = require('./routes/public')
 
 app.use('/auth', authRoutes)
 app.use('/api/clients', clientRoutes)
-app.use('/api/accounts', accountRoutes)
 app.use('/api/reports', reportRoutes)
 app.use('/api/dashboards', dashboardRoutes)
+app.use('/api/accounts', accountRoutes)
+app.use('/', publicRoutes)
 
-import { supabase, supabaseAdmin } from './config/supabase.js'
+const publicDir = path.join(__dirname, '..', 'public')
+if (fs.existsSync(publicDir)) {
+  app.get('/admin', (req, res) => {
+    res.sendFile(path.join(publicDir, 'admin.html'))
+  })
+  app.get('/login', (req, res) => {
+    res.sendFile(path.join(publicDir, 'admin.html'))
+  })
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(publicDir, 'index.html'))
+  })
+  app.use(express.static(publicDir, { index: false }))
+}
+
+function handleError(err, req, res, defaultMsg) {
+  console.error(err)
+  const msg = err?.message || ''
+  if (msg.includes('relation') && msg.includes('does not exist')) {
+    return res.status(503).json({
+      error: {
+        message: 'Banco de dados não configurado. Execute a migration SQL no Supabase Dashboard.',
+        hint: '/api/health'
+      }
+    })
+  }
+  res.status(500).json({ error: { message: defaultMsg || 'Erro interno do servidor' } })
+}
 
 app.get('/api/health', async (req, res) => {
-  let dbStatus = 'unknown', dbError = null
-  let adminStatus = 'unknown', adminError = null
   try {
-    const { data, error } = await supabase.from('clients').select('*').limit(1)
-    dbStatus = error ? 'erro:' + error.message : 'ok'
-    dbError = error?.message || null
-  } catch (e) { dbStatus = 'crash'; dbError = e.message }
-  try {
-    const { data, error } = await supabaseAdmin.from('clients').select('*').limit(1)
-    adminStatus = error ? 'erro:' + error.message : 'ok'
-    adminError = error?.message || null
-  } catch (e) { adminStatus = 'crash'; adminError = e.message }
-  res.json({
-    status: 'ok',
-    version: '1.0.0',
-    env: {
-      url: !!process.env.SUPABASE_URL,
-      key: !!process.env.SUPABASE_KEY,
-      key_starts: (process.env.SUPABASE_KEY || 'vazio').substring(0, 3),
-      service: !!process.env.SUPABASE_SERVICE_KEY,
-      service_starts: (process.env.SUPABASE_SERVICE_KEY || 'vazio').substring(0, 3)
-    },
-    anon_db: dbStatus,
-    anon_error: dbError,
-    admin_db: adminStatus,
-    admin_error: adminError
-  })
+    const { error } = await supabase.from('reportact_clients').select('id').limit(1)
+    res.json({
+      status: error ? 'degraded' : 'ok',
+      db: error ? `tables missing: ${error.message}` : 'connected',
+      version: '1.0.0'
+    })
+  } catch {
+    res.json({ status: 'degraded', db: 'connection error' })
+  }
 })
 
-app.get('/d/:slug', (req, res) => {
-  res.sendFile(path.join(__dirname, 'templates', 'client-dashboard.html'))
+app.use((err, req, res, next) => {
+  handleError(err, req, res)
 })
 
-app.get('/r/:token', (req, res) => {
-  res.sendFile(path.join(__dirname, 'templates', 'shared-report.html'))
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`ReportACT server running on port ${PORT}`)
+  console.log(`http://localhost:${PORT}`)
 })
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'landing.html'))
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down...')
+  server.close(() => process.exit(0))
 })
 
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'))
-})
-
-try {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`ACT Report rodando em http://0.0.0.0:${PORT}`)
-    console.log(`Supabase: ${process.env.SUPABASE_URL ? 'configurado' : 'FALTANDO!'}`)
-  })
-} catch (err) {
-  console.error('Erro ao iniciar servidor:', err)
-  process.exit(1)
-}
+module.exports = app

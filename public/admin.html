@@ -9,121 +9,115 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0E0E0E;--bg-card:#161616;--borda:#222;
-  --borda-accent:rgba(245,177,19,0.25);
-  --ambar:#F5B113;--ambar-dim:#C48D0E;--ambar-glow:rgba(245,177,19,0.10);--ambar-soft:rgba(245,177,19,0.06);
-  --texto:#FFFFFF;--texto-sec:rgba(255,255,255,0.78);--texto-ter:rgba(255,255,255,0.55);
-  --verde:#22C55E;--red:#EF4444;--blue:#3B82F6;
-  --fd:'Manrope',sans-serif;--fb:'Inter',sans-serif;
-  --hover-bg:rgba(255,255,255,0.04);--hover-table:rgba(255,255,255,0.02);
-  --table-border:rgba(255,255,255,0.03);--table-head:rgba(255,255,255,0.02);
-  --sidebar-bg:#0a0a0a;--overlay-bg:rgba(0,0,0,0.5);--modal-overlay:rgba(0,0,0,0.85);
-}
-html{scroll-behavior:smooth;font-size:16px;}
-body{font-family:var(--fb);background:var(--bg);color:var(--texto);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;overflow-x:hidden;}
-::-webkit-scrollbar{width:6px;height:6px;}
-::-webkit-scrollbar-thumb{background:var(--borda);border-radius:3px;}
-.sidebar{width:220px;min-height:100vh;background:var(--sidebar-bg);border-right:1px solid var(--borda);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
-.sidebar-header{padding:24px 16px 16px;border-bottom:1px solid var(--borda);}
-.sidebar-logo{font-family:var(--fd);font-size:1rem;font-weight:900;letter-spacing:-0.5px;color:var(--texto);display:flex;align-items:center;gap:8px;}
-.sidebar-logo img{max-height:40px;width:auto;}
-.sidebar-logo em{font-style:normal;color:var(--ambar);}
-.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--texto-ter);text-decoration:none;font-size:0.875rem;font-weight:500;cursor:pointer;border-left:2px solid transparent;transition:0.2s;}
-.nav-item:hover{background:var(--hover-bg);color:var(--texto-sec);}
-.nav-item.active{color:var(--ambar);border-left-color:var(--ambar);background:var(--ambar-soft);}
-.nav-item .ico{font-size:1.1rem;width:20px;text-align:center;}
-.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
-.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--borda);background:var(--bg-card);}
-.topbar h2{font-family:var(--fd);font-size:1.15rem;font-weight:800;letter-spacing:-0.3px;}
-.user-info{display:flex;align-items:center;gap:12px;font-size:0.8rem;color:var(--texto-ter);}
-.content{padding:20px 24px;flex:1;}
-.page{display:none;}
-.page.active{display:block;}
-.card{background:var(--bg-card);border:1px solid var(--borda);border-radius:12px;padding:20px;margin-bottom:16px;}
-.card h3{font-family:var(--fd);font-size:0.95rem;font-weight:700;margin-bottom:14px;letter-spacing:-0.2px;}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-size:0.8rem;font-weight:600;font-family:var(--fb);cursor:pointer;transition:0.2s;white-space:nowrap;}
-.btn-primary{background:var(--ambar);color:#0E0E0E;}
-.btn-primary:hover{background:var(--ambar-dim);}
-.btn-outline{background:transparent;border:1px solid var(--borda);color:var(--texto-sec);}
-.btn-outline:hover{background:var(--hover-bg);border-color:var(--texto-ter);}
-.btn-sm{padding:5px 10px;font-size:0.75rem;}
-.btn-danger{color:var(--red);}
-.btn-danger:hover{background:rgba(239,68,68,0.1)!important;}
-.btn-success{color:var(--verde);}
-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
-th{text-align:left;padding:10px 12px;font-size:0.7rem;text-transform:uppercase;color:var(--texto-ter);border-bottom:1px solid var(--table-border);background:var(--table-head);font-weight:600;letter-spacing:0.3px;}
-td{padding:10px 12px;border-bottom:1px solid var(--table-border);}
-tr:hover td{background:var(--hover-table);}
-.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.65rem;font-weight:600;}
-.badge-success{background:rgba(34,197,94,0.12);color:var(--verde);}
-.badge-warning{background:rgba(245,177,19,0.12);color:var(--ambar);}
-.badge-info{background:rgba(59,130,246,0.12);color:var(--blue);}
-.form-group{margin-bottom:14px;}
-.form-group label{display:block;font-size:0.78rem;font-weight:600;color:var(--texto-sec);margin-bottom:5px;}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--borda);border-radius:8px;font-size:0.85rem;font-family:var(--fb);color:var(--texto);transition:0.2s;}
-.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--ambar);box-shadow:0 0 0 2px var(--borda-accent);}
-.form-group input::placeholder{color:var(--texto-ter);}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.modal{position:fixed;inset:0;background:var(--modal-overlay);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);}
-.modal.open{display:flex;}
-.modal-content{background:var(--bg-card);border:1px solid var(--borda);border-radius:16px;padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;}
-.modal-content h3{font-family:var(--fd);font-size:1.1rem;font-weight:800;margin-bottom:16px;}
-.empty-state{text-align:center;padding:50px 20px;color:var(--texto-ter);}
-.empty-state p{font-size:0.9rem;}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px;}
-.kpi-card{background:var(--bg-card);border:1px solid var(--borda);border-radius:12px;padding:18px;}
-.kpi-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--texto-ter);margin-bottom:6px;}
-.kpi-value{font-family:var(--fd);font-size:1.5rem;font-weight:800;color:var(--texto);}
-.kpi-sub{font-size:0.72rem;color:var(--texto-ter);margin-top:4px;}
-.report-preview{width:100%;height:600px;border:none;border-radius:12px;background:var(--bg);}
+:root{--bg:#0E0E0E;--bg-card:#161616;--borda:#222;--borda-accent:rgba(245,177,19,0.25);--ambar:#F5B113;--ambar-dim:#C48D0E;--ambar-glow:rgba(245,177,19,0.10);--ambar-soft:rgba(245,177,19,0.06);--texto:#FFFFFF;--texto-sec:rgba(255,255,255,0.78);--texto-ter:rgba(255,255,255,0.55);--verde:#22C55E;--red:#EF4444;--blue:#3B82F6;--fd:'Manrope',sans-serif;--fb:'Inter',sans-serif;--hover-bg:rgba(255,255,255,0.04);--hover-table:rgba(255,255,255,0.02);--table-border:rgba(255,255,255,0.03);--table-head:rgba(255,255,255,0.02);--sidebar-bg:#0a0a0a;--overlay-bg:rgba(0,0,0,0.5);--modal-overlay:rgba(0,0,0,0.85)}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--fb);background:var(--bg);color:var(--texto);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;overflow-x:hidden}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--borda);border-radius:3px}
+.sidebar{width:220px;min-height:100vh;background:var(--sidebar-bg);border-right:1px solid var(--borda);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sidebar-header{padding:24px 16px 16px;border-bottom:1px solid var(--borda)}
+.sidebar-logo{font-family:var(--fd);font-size:1rem;font-weight:900;letter-spacing:-0.5px;color:var(--texto);display:flex;align-items:center;gap:8px}
+.sidebar-logo img{max-height:40px;width:auto}
+.sidebar-logo em{font-style:normal;color:var(--ambar)}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--texto-ter);text-decoration:none;font-size:0.875rem;font-weight:500;cursor:pointer;border-left:2px solid transparent;transition:0.2s}
+.nav-item:hover{background:var(--hover-bg);color:var(--texto-sec)}
+.nav-item.active{color:var(--ambar);border-left-color:var(--ambar);background:var(--ambar-soft)}
+.nav-item .ico{font-size:1.1rem;width:20px;text-align:center}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--borda);background:var(--bg-card)}
+.topbar h2{font-family:var(--fd);font-size:1.15rem;font-weight:800;letter-spacing:-0.3px}
+.user-info{display:flex;align-items:center;gap:12px;font-size:0.8rem;color:var(--texto-ter)}
+.content{padding:20px 24px;flex:1}
+.page{display:none}
+.page.active{display:block}
+.card{background:var(--bg-card);border:1px solid var(--borda);border-radius:12px;padding:20px;margin-bottom:16px}
+.card h3{font-family:var(--fd);font-size:0.95rem;font-weight:700;margin-bottom:14px;letter-spacing:-0.2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-size:0.8rem;font-weight:600;font-family:var(--fb);cursor:pointer;transition:0.2s;white-space:nowrap}
+.btn-primary{background:var(--ambar);color:#0E0E0E}
+.btn-primary:hover{background:var(--ambar-dim)}
+.btn-outline{background:transparent;border:1px solid var(--borda);color:var(--texto-sec)}
+.btn-outline:hover{background:var(--hover-bg);border-color:var(--texto-ter)}
+.btn-sm{padding:5px 10px;font-size:0.75rem}
+.btn-danger{color:var(--red)}
+.btn-danger:hover{background:rgba(239,68,68,0.1)!important}
+.btn-success{color:var(--verde)}
+.btn-link{background:transparent;border:none;color:var(--ambar);font-size:0.8rem;padding:4px;cursor:pointer}
+.btn-link:hover{text-decoration:underline}
+table{width:100%;border-collapse:collapse;font-size:0.85rem}
+th{text-align:left;padding:10px 12px;font-size:0.7rem;text-transform:uppercase;color:var(--texto-ter);border-bottom:1px solid var(--table-border);background:var(--table-head);font-weight:600;letter-spacing:0.3px}
+td{padding:10px 12px;border-bottom:1px solid var(--table-border)}
+tr:hover td{background:var(--hover-table)}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.65rem;font-weight:600}
+.badge-success{background:rgba(34,197,94,0.12);color:var(--verde)}
+.badge-warning{background:rgba(245,177,19,0.12);color:var(--ambar)}
+.badge-info{background:rgba(59,130,246,0.12);color:var(--blue)}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:0.78rem;font-weight:600;color:var(--texto-sec);margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--borda);border-radius:8px;font-size:0.85rem;font-family:var(--fb);color:var(--texto);transition:0.2s}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--ambar);box-shadow:0 0 0 2px var(--borda-accent)}
+.form-group input::placeholder{color:var(--texto-ter)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal{position:fixed;inset:0;background:var(--modal-overlay);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
+.modal.open{display:flex}
+.modal-content{background:var(--bg-card);border:1px solid var(--borda);border-radius:16px;padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
+.modal-content h3{font-family:var(--fd);font-size:1.1rem;font-weight:800;margin-bottom:16px}
+.empty-state{text-align:center;padding:50px 20px;color:var(--texto-ter)}
+.empty-state p{font-size:0.9rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.kpi-card{background:var(--bg-card);border:1px solid var(--borda);border-radius:12px;padding:18px}
+.kpi-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--texto-ter);margin-bottom:6px}
+.kpi-value{font-family:var(--fd);font-size:1.5rem;font-weight:800;color:var(--texto)}
+.kpi-sub{font-size:0.72rem;color:var(--texto-ter);margin-top:4px}
+.report-preview{width:100%;height:600px;border:none;border-radius:12px;background:var(--bg)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast-container{position:fixed;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
-.toast{padding:12px 16px;border-radius:10px;background:var(--bg-card);border:1px solid var(--borda);font-size:0.85rem;color:var(--texto);display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5);pointer-events:auto;animation:slideIn .25s ease-out;max-width:380px;}
-.toast-success{border-color:rgba(34,197,94,0.3);}
-.toast-error{border-color:rgba(239,68,68,0.3);}
-.toast .toast-icon{font-size:1rem;}
-.toast-success .toast-icon{color:var(--verde);}
-.toast-error .toast-icon{color:var(--red);}
+.toast-container{position:fixed;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:12px 16px;border-radius:10px;background:var(--bg-card);border:1px solid var(--borda);font-size:0.85rem;color:var(--texto);display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5);pointer-events:auto;animation:slideIn .25s ease-out;max-width:380px}
+.toast-success{border-color:rgba(34,197,94,0.3)}
+.toast-error{border-color:rgba(239,68,68,0.3)}
+.toast .toast-icon{font-size:1rem}
+.toast-success .toast-icon{color:var(--verde)}
+.toast-error .toast-icon{color:var(--red)}
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:0.65rem;font-weight:600;background:var(--acc-badge, rgba(255,255,255,0.04));color:var(--texto-ter);}
-.tag-ambar{background:var(--ambar-soft);color:var(--ambar);}
-.table-actions{display:flex;gap:4px;flex-wrap:wrap;}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:0.65rem;font-weight:600;background:rgba(255,255,255,0.04);color:var(--texto-ter)}
+.tag-ambar{background:var(--ambar-soft);color:var(--ambar)}
+.table-actions{display:flex;gap:4px;flex-wrap:wrap}
 @media(max-width:768px){
-  .sidebar{width:60px;}
-  .sidebar .sidebar-logo span,.sidebar .nav-item span:not(.ico){display:none;}
-  .main{margin-left:60px;}
-  .form-row{grid-template-columns:1fr;}
-  .kpi-grid{grid-template-columns:1fr 1fr;}
-  .content{padding:16px;}
+  .sidebar{width:60px}
+  .sidebar .sidebar-logo span,.sidebar .nav-item span:not(.ico){display:none}
+  .main{margin-left:60px}
+  .form-row{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .content{padding:16px}
 }
 </style>
 </head>
 <body>
 
 <div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;width:100%;background:var(--bg);padding:20px">
-  <div style="background:var(--bg-card);border:1px solid var(--borda);border-radius:16px;padding:40px;width:100%;max-width:400px;text-align:center">
-    <div style="margin-bottom:24px">
+  <div style="background:var(--bg-card);border:1px solid var(--borda);border-radius:16px;padding:40px;width:100%;max-width:400px">
+    <div style="margin-bottom:24px;text-align:center">
       <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" style="height:40px;margin-bottom:12px" onerror="this.style.display='none'">
       <h1 style="font-family:var(--fd);font-size:1.3rem;font-weight:900;letter-spacing:-0.5px"><em style="font-style:normal;color:var(--ambar)">Report</em>ACT</h1>
-      <p style="color:var(--texto-ter);font-size:0.85rem;margin-top:4px">Relatórios de marketing digital</p>
+      <p style="color:var(--texto-ter);font-size:0.85rem;margin-top:4px" id="loginSubtitle">Relatórios de marketing digital</p>
     </div>
     <div id="loginError" style="color:var(--red);font-size:0.8rem;margin-bottom:10px;display:none"></div>
-    <div class="form-group"><label>Email</label><input id="loginEmail" type="email" placeholder="seu@email.com" style="text-align:center" autocomplete="email"></div>
-    <div class="form-group"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••••" style="text-align:center" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">Entrar</button>
-    <p style="color:var(--texto-ter);font-size:0.7rem;margin-top:12px">admin@actcontrol.com.br</p>
+    <div id="loginForm">
+      <div class="form-group" id="nameGroup" style="display:none"><label>Nome</label><input id="loginName" type="text" placeholder="Seu nome" style="text-align:center"></div>
+      <div class="form-group"><label>Email</label><input id="loginEmail" type="email" placeholder="seu@email.com" style="text-align:center" autocomplete="email"></div>
+      <div class="form-group"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••••" style="text-align:center" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" id="loginBtn" onclick="doLogin()">Entrar</button>
+      <div style="margin-top:12px;text-align:center">
+        <button class="btn-link" id="toggleAuthMode" onclick="toggleAuth()">Criar conta gratuita</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <div id="appShell" style="display:none;min-height:100vh">
 <aside class="sidebar">
   <div class="sidebar-header">
-    <div class="sidebar-logo">
-      <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" onerror="this.style.display='none'">
-      <span><em style="font-style:normal;color:var(--ambar)">Report</em>ACT</span>
-    </div>
+    <div class="sidebar-logo"><img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" onerror="this.style.display='none'"><span><em style="font-style:normal;color:var(--ambar)">Report</em>ACT</span></div>
   </div>
   <nav class="sidebar-nav" id="nav">
     <div class="nav-item active" data-page="dashboard"><span class="ico">◇</span><span>Dashboard</span></div>
@@ -133,7 +127,6 @@ tr:hover td{background:var(--hover-table);}
     <div class="nav-item" data-page="accounts"><span class="ico">◉</span><span>Conexões</span></div>
   </nav>
 </aside>
-
 <div class="main">
   <div class="topbar">
     <h2 id="pageTitle">Dashboard</h2>
@@ -143,7 +136,6 @@ tr:hover td{background:var(--hover-table);}
     </div>
   </div>
   <div class="content">
-
     <div id="page-dashboard" class="page active">
       <div class="kpi-grid" id="kpiGrid">
         <div class="kpi-card"><div class="kpi-label">Clientes</div><div class="kpi-value" id="kpiClients">—</div></div>
@@ -151,12 +143,8 @@ tr:hover td{background:var(--hover-table);}
         <div class="kpi-card"><div class="kpi-label">Conexões</div><div class="kpi-value" id="kpiAccounts">—</div></div>
         <div class="kpi-card"><div class="kpi-label">Dashboards</div><div class="kpi-value" id="kpiDashboards">—</div></div>
       </div>
-      <div class="card">
-        <h3>Últimos Relatórios</h3>
-        <div id="recentReports"><div class="empty-state"><p>Nenhum relatório gerado ainda</p></div></div>
-      </div>
+      <div class="card"><h3>Últimos Relatórios</h3><div id="recentReports"><div class="empty-state"><p>Nenhum relatório gerado ainda</p></div></div></div>
     </div>
-
     <div id="page-clients" class="page">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <h3 style="font-family:var(--fd);font-size:1rem;font-weight:700">Clientes</h3>
@@ -164,7 +152,6 @@ tr:hover td{background:var(--hover-table);}
       </div>
       <div class="card"><div id="clientList"><div class="empty-state"><p>Carregando...</p></div></div></div>
     </div>
-
     <div id="page-reports" class="page">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <h3 style="font-family:var(--fd);font-size:1rem;font-weight:700">Relatórios</h3>
@@ -172,7 +159,6 @@ tr:hover td{background:var(--hover-table);}
       </div>
       <div class="card"><div id="reportList"><div class="empty-state"><p>Carregando...</p></div></div></div>
     </div>
-
     <div id="page-dashboards" class="page">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <h3 style="font-family:var(--fd);font-size:1rem;font-weight:700">Dashboards</h3>
@@ -180,7 +166,6 @@ tr:hover td{background:var(--hover-table);}
       </div>
       <div class="card"><div id="dashboardList"><div class="empty-state"><p>Carregando...</p></div></div></div>
     </div>
-
     <div id="page-accounts" class="page">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <h3 style="font-family:var(--fd);font-size:1rem;font-weight:700">Conexões</h3>
@@ -188,7 +173,6 @@ tr:hover td{background:var(--hover-table);}
       </div>
       <div class="card"><div id="accountList"><div class="empty-state"><p>Carregando...</p></div></div></div>
     </div>
-
   </div>
 </div>
 </div>
@@ -259,9 +243,7 @@ tr:hover td{background:var(--hover-table);}
   <div class="form-row"><div class="form-group"><label>Nome</label><input id="fAcctName" placeholder="Conta Principal"></div>
   <div class="form-group"><label>Account ID</label><input id="fAcctId" placeholder="ID da plataforma"></div></div>
   <div class="form-group"><label>Token</label><input id="fAcctToken" type="password" placeholder="Token de acesso"></div>
-  <div style="font-size:0.75rem;color:var(--texto-ter);margin-bottom:14px;background:var(--ambar-soft);padding:10px;border-radius:8px;border:1px solid var(--borda-accent)">
-    Deixe o token em branco para usar dados de demonstração.
-  </div>
+  <div style="font-size:0.75rem;color:var(--texto-ter);margin-bottom:14px;background:var(--ambar-soft);padding:10px;border-radius:8px;border:1px solid var(--borda-accent)">Deixe o token em branco para usar dados de demonstração.</div>
   <div style="display:flex;gap:8px;justify-content:flex-end">
     <button class="btn btn-outline" onclick="closeModal('modal-account')">Cancelar</button>
     <button class="btn btn-primary" onclick="connectAccount()">Conectar</button>
@@ -284,13 +266,11 @@ tr:hover td{background:var(--hover-table);}
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-const BASE = window.location.pathname.startsWith('/reportact') ? '/reportact' : window.location.pathname.startsWith('/dashact') ? '/dashact' : ''
-const API = window.location.origin + BASE
+const BASE = window.location.pathname.startsWith('/dashact') ? '/dashact' : ''
 let token = localStorage.getItem('act_report_token')
 let clients=[], reports=[], accounts=[], dashboards=[]
+let isRegisterMode = false
 
-
-/* ─── Toast ─────────────────────────────────── */
 function toast(msg, type='success') {
   const c = document.getElementById('toastContainer')
   const el = document.createElement('div')
@@ -300,22 +280,18 @@ function toast(msg, type='success') {
   setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(100%)'; el.style.transition='.3s'; setTimeout(()=>el.remove(),300) }, 3500)
 }
 
-
-/* ─── API ───────────────────────────────────── */
 async function api(path, opts={}) {
   const h = {'Content-Type':'application/json'}
-  if (token && path!=='/auth/login') h['Authorization'] = 'Bearer '+token
-  const res = await fetch(API+path, {...opts, headers:{...h, ...(opts.headers||{})}})
+  if (token && !path.startsWith('/auth/login') && !path.startsWith('/auth/register')) h['Authorization'] = 'Bearer '+token
+  const res = await fetch(path, {...opts, headers:{...h, ...(opts.headers||{})}})
   if (!res.ok) {
     let msg = 'HTTP '+res.status
-    try { const e = await res.json(); msg = e.error || msg } catch(_) {}
+    try { const e = await res.json(); msg = e.error?.message || msg } catch(_) {}
     return {error: {message: msg}}
   }
   return res.json()
 }
 
-
-/* ─── Sidebar ────────────────────────────────── */
 document.getElementById('nav').addEventListener('click', e => {
   const item = e.target.closest('.nav-item')
   if (!item) return
@@ -323,22 +299,19 @@ document.getElementById('nav').addEventListener('click', e => {
   item.classList.add('active')
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
   const pg = document.getElementById('page-'+item.dataset.page)
-  if (pg) {
-    pg.classList.add('active')
-    document.getElementById('pageTitle').textContent = item.textContent.trim()
-  }
+  if (pg) { pg.classList.add('active'); document.getElementById('pageTitle').textContent = item.textContent.trim() }
 })
 
-
-/* ─── Modal ──────────────────────────────────── */
 function closeModal(id) { document.getElementById(id).classList.remove('open') }
 function openModal(id) { document.getElementById(id).classList.add('open') }
 
-
-/* ─── Login ──────────────────────────────────── */
-function showLoginError(msg) {
-  const el = document.getElementById('loginError')
-  el.textContent = msg; el.style.display = 'block'
+function toggleAuth() {
+  isRegisterMode = !isRegisterMode
+  document.getElementById('nameGroup').style.display = isRegisterMode ? 'block' : 'none'
+  document.getElementById('loginBtn').textContent = isRegisterMode ? 'Criar conta' : 'Entrar'
+  document.getElementById('toggleAuthMode').textContent = isRegisterMode ? 'Já tenho conta' : 'Criar conta gratuita'
+  document.getElementById('loginSubtitle').textContent = isRegisterMode ? 'Crie sua conta gratuita' : 'Relatórios de marketing digital'
+  document.getElementById('loginError').style.display = 'none'
 }
 
 async function doLogin() {
@@ -346,10 +319,21 @@ async function doLogin() {
   const password = document.getElementById('loginPass').value
   if (!email || !password) return showLoginError('Preencha email e senha')
   document.getElementById('loginError').style.display = 'none'
-  const btn = document.querySelector('#loginScreen .btn-primary')
-  btn.textContent = 'Entrando...'; btn.disabled = true
+  const btn = document.getElementById('loginBtn')
+  btn.textContent = isRegisterMode ? 'Criando...' : 'Entrando...'
+  btn.disabled = true
   try {
-    const res = await api('/auth/login', {method:'POST', body: JSON.stringify({email, password})})
+    if (isRegisterMode) {
+      const name = document.getElementById('loginName').value
+      const res = await api(BASE+'/auth/register', {method:'POST', body: JSON.stringify({email, password, name})})
+      if (res.error) { showLoginError(res.error.message); btn.textContent='Criar conta'; btn.disabled=false; return }
+      toast('Conta criada! Faça login.')
+      isRegisterMode = false
+      toggleAuth()
+      btn.textContent = 'Entrar'; btn.disabled = false
+      return
+    }
+    const res = await api(BASE+'/auth/login', {method:'POST', body: JSON.stringify({email, password})})
     if (res.session?.access_token) {
       token = res.session.access_token
       localStorage.setItem('act_report_token', token)
@@ -362,12 +346,16 @@ async function doLogin() {
     }
   } catch(e) {
     showLoginError('Erro: '+(e.message||'conexão'))
-    btn.textContent = 'Entrar'; btn.disabled = false
+    btn.textContent = isRegisterMode ? 'Criar conta' : 'Entrar'
+    btn.disabled = false
   }
 }
 
+function showLoginError(msg) {
+  const el = document.getElementById('loginError')
+  el.textContent = msg; el.style.display = 'block'
+}
 
-/* ─── App ────────────────────────────────────── */
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none'
   document.getElementById('appShell').style.display = ''
@@ -381,8 +369,6 @@ async function loadAll() {
 
 function logout() { localStorage.removeItem('act_report_token'); location.reload() }
 
-
-/* ─── Dashboard ──────────────────────────────── */
 function updateRecentReports() {
   const el = document.getElementById('recentReports')
   const list = reports.slice(0, 5)
@@ -393,8 +379,6 @@ function updateRecentReports() {
     '<td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="viewReport(\''+r.id+'\')">Ver</button></td></tr>').join('')+'</tbody></table>'
 }
 
-
-/* ─── Clientes ───────────────────────────────── */
 function openClientModal(id) {
   const isEdit = typeof id === 'string' && id.length > 5
   document.getElementById('fClientId').value = isEdit ? id : ''
@@ -403,38 +387,28 @@ function openClientModal(id) {
   fields.forEach(f => document.getElementById(f).value = '')
   if (isEdit) {
     const c = clients.find(x => x.id === id)
-    if (c) {
-      document.getElementById('fClientName').value = c.name || ''
-      document.getElementById('fClientCompany').value = c.company || ''
-      document.getElementById('fClientEmail').value = c.email || ''
-      document.getElementById('fClientPhone').value = c.phone || ''
-      document.getElementById('fClientWebsite').value = c.website || ''
-    }
+    if (c) { document.getElementById('fClientName').value = c.name||''
+      document.getElementById('fClientCompany').value = c.company||''
+      document.getElementById('fClientEmail').value = c.email||''
+      document.getElementById('fClientPhone').value = c.phone||''
+      document.getElementById('fClientWebsite').value = c.website||'' }
   }
   openModal('modal-client')
 }
 
 async function saveClient() {
   const id = document.getElementById('fClientId').value
-  const body = {
-    name: document.getElementById('fClientName').value,
-    company: document.getElementById('fClientCompany').value,
-    email: document.getElementById('fClientEmail').value,
-    phone: document.getElementById('fClientPhone').value,
-    website: document.getElementById('fClientWebsite').value
-  }
+  const body = { name: document.getElementById('fClientName').value, company: document.getElementById('fClientCompany').value, email: document.getElementById('fClientEmail').value, phone: document.getElementById('fClientPhone').value, website: document.getElementById('fClientWebsite').value }
   if (!body.name) { toast('Nome do cliente obrigatório', 'error'); return }
   const method = id ? 'PUT' : 'POST'
-  const url = id ? '/api/clients/'+id : '/api/clients'
+  const url = id ? BASE+'/api/clients/'+id : BASE+'/api/clients'
   const res = await api(url, { method, body: JSON.stringify(body) })
   if (res.error) { toast(res.error.message||'Erro ao salvar cliente', 'error'); return }
-  closeModal('modal-client')
-  toast(id ? 'Cliente atualizado' : 'Cliente criado')
-  await loadClients()
+  closeModal('modal-client'); toast(id ? 'Cliente atualizado' : 'Cliente criado'); await loadClients()
 }
 
 async function loadClients() {
-  const res = await api('/api/clients'); clients = res.clients || []
+  const res = await api(BASE+'/api/clients'); clients = res.clients || []
   document.getElementById('kpiClients').textContent = clients.length
   const el = document.getElementById('clientList')
   if (!clients.length) { el.innerHTML = '<div class="empty-state"><p>Nenhum cliente cadastrado</p></div>'; return }
@@ -442,11 +416,9 @@ async function loadClients() {
     clients.map(c => '<tr><td><strong>'+c.name+'</strong></td><td>'+(c.company||'<span style="color:var(--texto-ter)">—</span>')+'</td><td>'+(c.email||'<span style="color:var(--texto-ter)">—</span>')+'</td>'+
     '<td style="text-align:right"><div class="table-actions" style="justify-content:flex-end">'+
     '<button class="btn btn-outline btn-sm" onclick="openClientModal(\''+c.id+'\')">Editar</button>'+
-    '<button class="btn btn-outline btn-sm btn-danger" onclick="del(\'/api/clients/'+c.id+'\',loadClients,\'Cliente removido\')">Remover</button></div></td></tr>').join('')+'</tbody></table>'
+    '<button class="btn btn-outline btn-sm btn-danger" onclick="del(\''+BASE+'/api/clients/'+c.id+'\',loadClients,\'Cliente removido\')">Remover</button></div></td></tr>').join('')+'</tbody></table>'
 }
 
-
-/* ─── Relatórios ─────────────────────────────── */
 function openReportModal() {
   const end = new Date().toISOString().split('T')[0]
   const start = new Date(Date.now()-30*86400000).toISOString().split('T')[0]
@@ -454,14 +426,16 @@ function openReportModal() {
   document.getElementById('fReportEnd').value = end
   document.getElementById('fReportTitle').value = ''
   document.getElementById('reportProgress').style.display = 'none'
-  document.getElementById('fReportClient').innerHTML = clients.map(c => '<option value="'+c.id+'">'+c.name+'</option>').join('')
+  document.getElementById('fReportClient').innerHTML = clients.map(c => '<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>').join('')
   openModal('modal-report')
 }
+
+function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
 
 async function generateReport() {
   const channels = [...document.querySelectorAll('#modal-report input[type=checkbox]:checked')].map(c => c.value)
   document.getElementById('reportProgress').style.display = 'block'
-  const r = await api('/api/reports/generate', { method:'POST', body: JSON.stringify({
+  const r = await api(BASE+'/api/reports/generate', { method:'POST', body: JSON.stringify({
     client_id: document.getElementById('fReportClient').value,
     title: document.getElementById('fReportTitle').value || undefined,
     period_start: document.getElementById('fReportStart').value,
@@ -470,30 +444,27 @@ async function generateReport() {
   })})
   document.getElementById('reportProgress').style.display = 'none'
   if (r.error) { toast(r.error.message||'Erro ao gerar', 'error'); return }
-  closeModal('modal-report')
-  toast('Relatório gerado com sucesso!')
-  await loadReports()
+  closeModal('modal-report'); toast('Relatório gerado com sucesso!'); await loadReports()
 }
 
 function viewReport(id) {
-  document.getElementById('reportIframe').src = API+'/api/reports/'+id+'/html'
+  document.getElementById('reportIframe').src = BASE+'/api/reports/'+id+'/html'
   openModal('modal-viewer')
 }
 
 function printReport() {
   const iframe = document.getElementById('reportIframe')
-  if (iframe && iframe.contentWindow) iframe.contentWindow.print()
+  if (iframe?.contentWindow) iframe.contentWindow.print()
 }
 
 function copyShareLink(id) {
   const r = reports.find(x => x.id === id)
-  if (!r || !r.share_token) { toast('Token de compartilhamento não encontrado', 'error'); return }
-  const url = window.location.origin + BASE + '/r/' + r.share_token
-  navigator.clipboard.writeText(url).then(() => toast('Link copiado!')).catch(() => toast('Erro ao copiar', 'error'))
+  if (!r || !r.share_token) { toast('Token não encontrado', 'error'); return }
+  navigator.clipboard.writeText(window.location.origin+BASE+'/r/'+r.share_token).then(() => toast('Link copiado!')).catch(() => toast('Erro ao copiar','error'))
 }
 
 async function loadReports() {
-  const res = await api('/api/reports'); reports = res.reports || []
+  const res = await api(BASE+'/api/reports'); reports = res.reports || []
   document.getElementById('kpiReports').textContent = reports.length
   const el = document.getElementById('reportList')
   if (!reports.length) { el.innerHTML = '<div class="empty-state"><p>Nenhum relatório gerado</p></div>'; return }
@@ -504,47 +475,41 @@ async function loadReports() {
     '<td style="text-align:right"><div class="table-actions" style="justify-content:flex-end">'+
     '<button class="btn btn-outline btn-sm" onclick="viewReport(\''+r.id+'\')">Ver</button>'+
     '<button class="btn btn-outline btn-sm '+(r.share_token?'btn-success':'')+'" onclick="copyShareLink(\''+r.id+'\')">Link</button>'+
-    '<button class="btn btn-outline btn-sm btn-danger" onclick="del(\'/api/reports/'+r.id+'\',loadReports,\'Relatório removido\')">✕</button></div></td></tr>').join('')+'</tbody></table>'
+    '<button class="btn btn-outline btn-sm btn-danger" onclick="del(\''+BASE+'/api/reports/'+r.id+'\',loadReports,\'Relatório removido\')">✕</button></div></td></tr>').join('')+'</tbody></table>'
 }
 
-
-/* ─── Dashboards ─────────────────────────────── */
 function openDashboardModal() {
   document.getElementById('fDashTitle').value = ''
-  document.getElementById('fDashClient').innerHTML = clients.map(c => '<option value="'+c.id+'">'+c.name+'</option>').join('')
+  document.getElementById('fDashClient').innerHTML = clients.map(c => '<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>').join('')
   openModal('modal-dashboard')
 }
 
 async function createDashboard() {
-  const r = await api('/api/dashboards/create', { method:'POST', body: JSON.stringify({
+  const r = await api(BASE+'/api/dashboards/create', { method:'POST', body: JSON.stringify({
     client_id: document.getElementById('fDashClient').value,
     title: document.getElementById('fDashTitle').value,
     config: JSON.parse(document.getElementById('fDashTemplate').value)
   })})
-  if (r.error) { toast(r.error.message||'Erro ao criar dashboard', 'error'); return }
-  closeModal('modal-dashboard')
-  toast('Dashboard criado!')
-  await loadDashboards()
+  if (r.error) { toast(r.error.message||'Erro ao criar', 'error'); return }
+  closeModal('modal-dashboard'); toast('Dashboard criado!'); await loadDashboards()
 }
 
 async function toggleDashboard(id) {
   const d = dashboards.find(x => x.id === id)
   if (!d) return
-  const r = await api('/api/dashboards/'+id, { method:'PUT', body: JSON.stringify({is_public: !d.is_public})})
-  if (r.error) { toast(r.error.message||'Erro', 'error'); return }
-  toast(d.is_public ? 'Dashboard removido do público' : 'Dashboard publicado!')
-  await loadDashboards()
+  const r = await api(BASE+'/api/dashboards/'+id, { method:'PUT', body: JSON.stringify({is_public: !d.is_public})})
+  if (r.error) { toast(r.error.message||'Erro','error'); return }
+  toast(d.is_public ? 'Dashboard removido do público' : 'Dashboard publicado!'); await loadDashboards()
 }
 
 function copyDashLink(id) {
   const d = dashboards.find(x => x.id === id)
-  if (!d || !d.slug) { toast('Slug não encontrado', 'error'); return }
-  const url = window.location.origin + BASE + '/d/' + d.slug
-  navigator.clipboard.writeText(url).then(() => toast('Link copiado!')).catch(() => toast('Erro ao copiar', 'error'))
+  if (!d || !d.slug) { toast('Slug não encontrado','error'); return }
+  navigator.clipboard.writeText(window.location.origin+BASE+'/d/'+d.slug).then(() => toast('Link copiado!')).catch(() => toast('Erro ao copiar','error'))
 }
 
 async function loadDashboards() {
-  const res = await api('/api/dashboards'); dashboards = res.dashboards || []
+  const res = await api(BASE+'/api/dashboards'); dashboards = res.dashboards || []
   document.getElementById('kpiDashboards').textContent = dashboards.length
   const el = document.getElementById('dashboardList')
   if (!dashboards.length) { el.innerHTML = '<div class="empty-state"><p>Nenhum dashboard criado</p></div>'; return }
@@ -556,61 +521,51 @@ async function loadDashboards() {
     '<button class="btn btn-outline btn-sm '+(d.is_public?'':'btn-success')+'" onclick="toggleDashboard(\''+d.id+'\')">'+(d.is_public?'Ocultar':'Publicar')+'</button>'+
     '<button class="btn btn-outline btn-sm" onclick="copyDashLink(\''+d.id+'\')">Link</button>'+
     '<a href="'+BASE+'/d/'+d.slug+'" target="_blank" class="btn btn-outline btn-sm">Abrir</a>'+
-    '<button class="btn btn-outline btn-sm btn-danger" onclick="del(\'/api/dashboards/'+d.id+'\',loadDashboards,\'Dashboard removido\')">✕</button></div></td></tr>').join('')+'</tbody></table>'
+    '<button class="btn btn-outline btn-sm btn-danger" onclick="del(\''+BASE+'/api/dashboards/'+d.id+'\',loadDashboards,\'Dashboard removido\')">✕</button></div></td></tr>').join('')+'</tbody></table>'
 }
 
-
-/* ─── Contas ─────────────────────────────────── */
 function openAccountModal() {
-  document.getElementById('fAcctName').value = ''; document.getElementById('fAcctId').value = ''; document.getElementById('fAcctToken').value = ''
-  document.getElementById('fAcctClient').innerHTML = clients.map(c => '<option value="'+c.id+'">'+c.name+'</option>').join('')
+  document.getElementById('fAcctName').value=''; document.getElementById('fAcctId').value=''; document.getElementById('fAcctToken').value=''
+  document.getElementById('fAcctClient').innerHTML = clients.map(c => '<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>').join('')
   openModal('modal-account')
 }
 
 async function connectAccount() {
-  const r = await api('/api/accounts/connect', { method:'POST', body: JSON.stringify({
+  const r = await api(BASE+'/api/accounts/connect', { method:'POST', body: JSON.stringify({
     client_id: document.getElementById('fAcctClient').value,
     platform: document.getElementById('fAcctPlatform').value,
     account_name: document.getElementById('fAcctName').value,
     account_id: document.getElementById('fAcctId').value,
     access_token: document.getElementById('fAcctToken').value
   })})
-  if (r.error) { toast(r.error.message||'Erro ao conectar', 'error'); return }
-  closeModal('modal-account')
-  toast('Conta conectada!')
-  await loadAccounts()
+  if (r.error) { toast(r.error.message||'Erro ao conectar','error'); return }
+  closeModal('modal-account'); toast('Conta conectada!'); await loadAccounts()
 }
 
 async function syncAccount(id) {
-  const r = await api('/api/accounts/'+id+'/sync', {method:'POST'})
-  if (r.error) { toast(r.error.message||'Erro ao sincronizar', 'error'); return }
+  const r = await api(BASE+'/api/accounts/'+id+'/sync', {method:'POST'})
+  if (r.error) { toast(r.error.message||'Erro ao sincronizar','error'); return }
   toast('Dados sincronizados!')
 }
 
 async function disconnectAccount(id) {
   if (!confirm('Desconectar esta conta?')) return
-  const r = await api('/api/accounts/'+id, {method:'DELETE'})
-  if (r.error) { toast(r.error.message||'Erro ao desconectar', 'error'); return }
-  toast('Conta desconectada')
-  await loadAccounts()
+  const r = await api(BASE+'/api/accounts/'+id, {method:'DELETE'})
+  if (r.error) { toast(r.error.message||'Erro ao desconectar','error'); return }
+  toast('Conta desconectada'); await loadAccounts()
 }
 
 async function loadAccounts() {
-  if (!clients.length) {
-    document.getElementById('kpiAccounts').textContent = '0'
-    document.getElementById('accountList').innerHTML = '<div class="empty-state"><p>Cadastre um cliente primeiro</p></div>'
-    return
-  }
   let all = []
   for (const c of clients) {
-    const res = await api('/api/accounts/client/'+c.id)
+    const res = await api(BASE+'/api/accounts/client/'+c.id)
     all = all.concat((res.accounts||[]).map(a => ({...a, client_name: c.name})))
   }
   accounts = all; document.getElementById('kpiAccounts').textContent = accounts.length
   const el = document.getElementById('accountList')
   if (!accounts.length) { el.innerHTML = '<div class="empty-state"><p>Nenhuma conta conectada</p></div>'; return }
   el.innerHTML = '<table><thead><tr><th>Cliente</th><th>Plataforma</th><th>Conta</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead><tbody>'+
-    accounts.map(a => '<tr><td>'+a.client_name+'</td><td><span class="badge badge-info">'+a.platform.replace(/_/g,' ')+'</span></td>'+
+    accounts.map(a => '<tr><td>'+escapeHtml(a.client_name)+'</td><td><span class="badge badge-info">'+a.platform.replace(/_/g,' ')+'</span></td>'+
     '<td style="font-size:0.8rem">'+(a.account_name||a.account_id||'<span style="color:var(--texto-ter)">—</span>')+'</td>'+
     '<td><span class="badge '+(a.connected?'badge-success':'badge-warning')+'">'+(a.connected?'Ativa':'Demo')+'</span></td>'+
     '<td style="text-align:right"><div class="table-actions" style="justify-content:flex-end">'+
@@ -618,21 +573,16 @@ async function loadAccounts() {
     '<button class="btn btn-outline btn-sm btn-danger" onclick="disconnectAccount(\''+a.id+'\')">✕</button></div></td></tr>').join('')+'</tbody></table>'
 }
 
-
-/* ─── Generic Delete ─────────────────────────── */
 async function del(url, loadFn, msg='Removido') {
   if (!confirm('Confirmar remoção?')) return
   const r = await api(url, {method:'DELETE'})
-  if (r.error) { toast(r.error.message||'Erro ao remover', 'error'); return }
-  toast(msg)
-  if (loadFn) await loadFn()
+  if (r.error) { toast(r.error.message||'Erro ao remover','error'); return }
+  toast(msg); if (loadFn) await loadFn()
 }
 
-
-/* ─── Init ───────────────────────────────────── */
 async function init() {
   if (token) {
-    const me = await api('/auth/me')
+    const me = await api(BASE+'/auth/me')
     if (me.user) {
       document.getElementById('userEmail').textContent = me.user.email
       document.getElementById('loginEmail').value = me.user.email
