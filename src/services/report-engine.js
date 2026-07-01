@@ -24,10 +24,12 @@ export function generateReportHTML(data) {
 
   const brandColor = branding?.primaryColor || '#F5B113'
   const brandAccent = branding?.accentColor || '#C48D0E'
+  const logoUrl = branding?.logoUrl || client?.logo_url || 'https://actcontrol.com.br/brand/logo.svg'
+  const brandName = branding?.companyName || 'ReportACT'
 
   const styles = getStyles(brandColor)
   const hasIg = !!m.followers
-const charts = getChartScripts(ads, m, ga, aDaily, gCampanhas, brandColor, brandAccent, hasIg)
+  const charts = getChartScripts(ads, m, ga, aDaily, gCampanhas, brandColor, brandAccent, hasIg)
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -45,8 +47,8 @@ const charts = getChartScripts(ads, m, ga, aDaily, gCampanhas, brandColor, brand
 
   <div class="header">
     <div class="brand">
-      <img src="https://actcontrol.com.br/brand/logo.svg" alt="ACT" onerror="this.style.display='none'">
-      <span><em>Report</em>ACT</span>
+      <img src="${logoUrl}" alt="${brandName}" onerror="this.style.display='none'">
+      <span>${branding?.companyName ? brandName : '<em>Report</em>ACT'}</span>
       <div><p class="period">${period?.start||'N/A'} a ${period?.end||'N/A'}</p></div>
     </div>
     <div class="client-info">
@@ -466,10 +468,17 @@ function getChartScripts(ads, meta, ga, daily, campaigns, brandColor, brandAccen
   const users = dailyData.map(d => d.users||Math.floor(Math.random()*150+50))
   const sessions = dailyData.map(d => d.sessions||Math.floor(Math.random()*200+70))
 
-  const ageLabels = ['13-17','18-24','25-34','35-44','45-54','55-64','65+']
-  const ageReach = [1200, 18200, 28400, 19600, 9800, 4200, 1600]
-  const ageImpressions = [2800, 45200, 78400, 51200, 23400, 9800, 3200]
-  const genderReach = [41200, 47800]
+  const demo = ads.demographics || {}
+
+  const ageLabels = demo.age?.length ? demo.age.map(a => `'${a.age}'`).join(',') : `'13-17','18-24','25-34','35-44','45-54','55-64','65+'`
+  const ageReach = demo.age?.length ? demo.age.map(a => a.reach).join(',') : '1200,18200,28400,19600,9800,4200,1600'
+  const ageImpressions = demo.age?.length ? demo.age.map(a => a.impressions).join(',') : '2800,45200,78400,51200,23400,9800,3200'
+
+  const genderLabels = demo.gender?.length ? demo.gender.map(g => `'${g.gender==='female'?'Feminino':g.gender==='male'?'Masculino':g.gender}'`).join(',') : `'Masculino','Feminino'`
+  const genderVals = demo.gender?.length ? demo.gender.map(g => g.reach).join(',') : '41200,47800'
+
+  const deviceLabels = demo.device?.length ? demo.device.map(d => `'${d.device.charAt(0).toUpperCase()+d.device.slice(1)}'`).join(',') : `'Mobile','Desktop','Tablet'`
+  const deviceVals = demo.device?.length ? demo.device.map(d => d.impressions).join(',') : '78,16,6'
 
   const igFollowers = hasIg ? `
 const fCtx=document.getElementById("chartFollowers")
@@ -497,21 +506,21 @@ new Chart(document.getElementById('chartSpendDaily'),{type:'bar',data:{
 },options:{...cd,scales:{y:{beginAtZero:true,ticks:{callback:v=>'R$ '+v}}},plugins:{legend:{display:false}}}})
 
 new Chart(document.getElementById('chartAge'),{type:'bar',data:{
-  labels:[${ageLabels.map(l=>"'"+l+"'").join(',')}],
+  labels:[${ageLabels}],
   datasets:[
-    {label:'Alcance',data:[${ageReach.join(',')}],backgroundColor:'rgba(245,177,19,0.6)',borderRadius:3},
-    {label:'Impressoes',data:[${ageImpressions.join(',')}],backgroundColor:'rgba(245,177,19,0.2)',borderRadius:3}
+    {label:'Alcance',data:[${ageReach}],backgroundColor:'rgba(245,177,19,0.6)',borderRadius:3},
+    {label:'Impressoes',data:[${ageImpressions}],backgroundColor:'rgba(245,177,19,0.2)',borderRadius:3}
   ]
 },options:{...cd,scales:{y:{beginAtZero:true}},plugins:{legend:{position:'top',labels:{color:tc,font:{size:10}}}}}})
 
 new Chart(document.getElementById('chartGender'),{type:'doughnut',data:{
-  labels:['Masculino','Feminino'],
-  datasets:[{data:[${genderReach.join(',')}],backgroundColor:[brand,dim],borderWidth:0}]
+  labels:[${genderLabels}],
+  datasets:[{data:[${genderVals}],backgroundColor:[brand,dim],borderWidth:0}]
 },options:{...cd,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11}}}}}})
 
 new Chart(document.getElementById('chartDevice'),{type:'doughnut',data:{
-  labels:['Mobile','Desktop','Tablet'],
-  datasets:[{data:[78,16,6],backgroundColor:[brand,dim,'rgba(255,255,255,0.15)'],borderWidth:0}]
+  labels:[${deviceLabels}],
+  datasets:[{data:[${deviceVals}],backgroundColor:[brand,dim,'rgba(255,255,255,0.15)'],borderWidth:0}]
 },options:{...cd,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11}}}}}})
 
 ${igFollowers}

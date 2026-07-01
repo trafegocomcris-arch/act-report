@@ -58,39 +58,184 @@ async function fetchInstagramStats(token, pageId) {
   }
 }
 
+function extractPurchases(actions, actionValues) {
+  const purchase = (actions || []).find(a => a.action_type === 'purchase')
+  const purchaseVal = (actionValues || []).find(a => a.action_type === 'purchase')
+  return {
+    purchases: parseInt(purchase?.value || 0),
+    conversion_value: parseFloat(purchaseVal?.value || 0)
+  }
+}
+
+function calcROAS(spend, conversionValue) {
+  return parseFloat(spend) > 0 ? (conversionValue / parseFloat(spend)) : 0
+}
+
 async function fetchAdsInsights(token, adAccountId) {
   if (!token || !adAccountId) return getDemoMetrics('meta_ads')
 
   try {
     const since = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
     const until = new Date().toISOString().split('T')[0]
+    const timeRange = JSON.stringify({ since, until })
+    const base = { time_range: timeRange, access_token: token }
+    const fields = 'spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,conversions,cost_per_conversion,conversion_value,actions,action_values'
 
-    const { data } = await axios.get(`${GRAPH_API}/act_${adAccountId}/insights`, {
-      params: {
-        fields: 'spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,conversions,cost_per_conversion',
-        level: 'account',
-        time_range: JSON.stringify({ since, until }),
-        access_token: token
-      }
-    })
+    const [accountRes, campaignRes, adRes, regionRes, demoRes, deviceRes] = await Promise.allSettled([
+      // 1. Account-level summary
+      axios.get(`${GRAPH_API}/act_${adAccountId}/insights`, {
+        params: { ...base, level: 'account', fields }
+      }),
+      // 2. Campaign-level
+      axios.get(`${GRAPH_API}/act_${adAccountId}/insights`, {
+        params: { ...base, level: 'campaign', fields: 'campaign_name,' + fields }
+      }),
+      // 3. Top 10 ads by spend
+      axios.get(`${GRAPH_API}/act_${adAccountId}/insights`, {
+        params: {
+          ...base, level: 'ad',
+          fields: 'ad_name,' + fields,
+          sort: JSON.stringify([{ field: 'spend', direction: 'descending' }]),
+          limit: 10
+        }
+      }),
+      // 4. Region breakdown
+      axios.get(`${GRAPH_API}/act_${adAccountId}/insights`, {
+        params: { ...base, level: 'account', fields: 'reach,impressions,frequency,spend,cpm', breakdowns: JSON.stringify(['region']) }
+      }),
+      // 5. Age + Gender breakdown
+      axios.get(`${GRAPH_API}/act_${adAccountId}/insights`, {
+        params: { ...base, level: 'account', fields: 'reach,impressions,spend', breakdowns: JSON.stringify(['age', 'gender']) }
+      }),
+      // 6. Device platform breakdown
+      axios.get(`${GRAPH_API}/act_${adAccountId}/insights`, {
+        params: { ...base, level: 'account', fields: 'impressions,reach', breakdowns: JSON.stringify(['device_platform']) }
+      })
+    ])
 
-    const d = data.data?.[0] || {}
-    return {
+    // ── Account level ──
+    const accountRow = accountRes.status === 'fulfilled' ? accountRes.value.data.data?.[0] : {}
+    const accountActions = accountRow.actions || []
+    const accountActionVals = accountRow.action_values || []
+    const accountPurchases = extractPurchases(accountActions, accountActionVals)
+    const spend = parseFloat(accountRow.spend || 0)
+
+    const result = {
       platform: 'Meta Ads',
       period: '30d',
-      spend: parseFloat(d.spend || 0),
-      impressions: parseInt(d.impressions || 0),
-      clicks: parseInt(d.clicks || 0),
-      ctr: parseFloat(d.ctr || 0),
-      cpc: parseFloat(d.cpc || 0),
-      cpm: parseFloat(d.cpm || 0),
-      reach: parseInt(d.reach || 0),
-      frequency: parseFloat(d.frequency || 0),
-      conversions: parseInt(d.conversions || 0),
-      cost_per_conversion: parseFloat(d.cost_per_conversion || 0),
+      spend,
+      impressions: parseInt(accountRow.impressions || 0),
+      clicks: parseInt(accountRow.clicks || 0),
+      ctr: parseFloat(accountRow.ctr || 0),
+      cpc: parseFloat(accountRow.cpc || 0),
+      cpm: parseFloat(accountRow.cpm || 0),
+      reach: parseInt(accountRow.reach || 0),
+      frequency: parseFloat(accountRow.frequency || 0),
+      conversions: parseInt(accountRow.conversions || 0),
+      cost_per_conversion: parseFloat(accountRow.cost_per_conversion || 0),
+      conversion_value: accountPurchases.conversion_value,
+      roas: calcROAS(spend, accountPurchases.conversion_value),
+      campaigns: [],
+      topAds: [],
+      regions: [],
+      demographics: { age: [], gender: [], device: [] },
       fetched_at: new Date().toISOString()
     }
-  } catch {
+
+    // ── Campaigns ──
+    if (campaignRes.status === 'fulfilled') {
+      const rows = campaignRes.value.data.data || []
+      result.campaigns = rows.map(r => {
+        const a = r.actions || []
+        const av = r.action_values || []
+        const p = extractPurchases(a, av)
+        const s = parseFloat(r.spend || 0)
+        return {
+          name: r.campaign_name || 'Sem nome',
+          spend: s,
+          purchases: p.purchases,
+          cpa: p.purchases > 0 ? (s / p.purchases) : 0,
+          conversion_value: p.conversion_value,
+          roas: calcROAS(s, p.conversion_value),
+          ctr: parseFloat(r.ctr || 0),
+          cpc: parseFloat(r.cpc || 0),
+          cpm: parseFloat(r.cpm || 0),
+          reach: parseInt(r.reach || 0),
+          impressions: parseInt(r.impressions || 0)
+        }
+      })
+    }
+
+    // ── Top Ads ──
+    if (adRes.status === 'fulfilled') {
+      const rows = adRes.value.data.data || []
+      result.topAds = rows.map(r => {
+        const a = r.actions || []
+        const av = r.action_values || []
+        const p = extractPurchases(a, av)
+        const s = parseFloat(r.spend || 0)
+        return {
+          name: r.ad_name || 'Sem nome',
+          spend: s,
+          purchases: p.purchases,
+          cpa: p.purchases > 0 ? (s / p.purchases) : 0,
+          conversion_value: p.conversion_value,
+          roas: calcROAS(s, p.conversion_value),
+          ctr: parseFloat(r.ctr || 0),
+          cpc: parseFloat(r.cpc || 0),
+          cpm: parseFloat(r.cpm || 0),
+          reach: parseInt(r.reach || 0),
+          impressions: parseInt(r.impressions || 0)
+        }
+      })
+    }
+
+    // ── Regions ──
+    if (regionRes.status === 'fulfilled') {
+      const rows = regionRes.value.data.data || []
+      result.regions = rows.map(r => ({
+        name: r.region || 'Desconhecida',
+        reach: parseInt(r.reach || 0),
+        impressions: parseInt(r.impressions || 0),
+        frequency: parseFloat(r.frequency || 0),
+        spend: parseFloat(r.spend || 0),
+        cpm: parseFloat(r.cpm || 0)
+      }))
+    }
+
+    // ── Age + Gender ──
+    if (demoRes.status === 'fulfilled') {
+      const rows = demoRes.value.data.data || []
+      const ageMap = {}
+      const genderMap = {}
+      for (const r of rows) {
+        const age = r.age || 'desconhecida'
+        const gender = r.gender || 'unknown'
+        if (!ageMap[age]) ageMap[age] = { reach: 0, impressions: 0, spend: 0 }
+        ageMap[age].reach += parseInt(r.reach || 0)
+        ageMap[age].impressions += parseInt(r.impressions || 0)
+        ageMap[age].spend += parseFloat(r.spend || 0)
+        if (!genderMap[gender]) genderMap[gender] = { reach: 0, impressions: 0 }
+        genderMap[gender].reach += parseInt(r.reach || 0)
+        genderMap[gender].impressions += parseInt(r.impressions || 0)
+      }
+      result.demographics.age = Object.entries(ageMap).map(([k, v]) => ({ age: k, ...v }))
+      result.demographics.gender = Object.entries(genderMap).map(([k, v]) => ({ gender: k, ...v }))
+    }
+
+    // ── Device ──
+    if (deviceRes.status === 'fulfilled') {
+      const rows = deviceRes.value.data.data || []
+      result.demographics.device = rows.map(r => ({
+        device: r.device_platform || 'desconhecido',
+        impressions: parseInt(r.impressions || 0),
+        reach: parseInt(r.reach || 0)
+      }))
+    }
+
+    return result
+  } catch (err) {
+    console.error(`Meta Ads API error: ${err.message}`)
     return getDemoMetrics('meta_ads')
   }
 }
@@ -152,6 +297,26 @@ export function getDemoMetrics(platform) {
       {name:'Minas Gerais', reach:12200, impressions:41000, frequency:3.36, spend:450.00, cpm:10.98},
       {name:'Bahia', reach:8900, impressions:28000, frequency:3.15, spend:320.00, cpm:11.43},
       {name:'Paraná', reach:7600, impressions:24000, frequency:3.16, spend:280.00, cpm:11.67}
-    ]
+    ],
+    demographics: {
+      age: [
+        {age:'13-17', reach:1200, impressions:2800, spend:45},
+        {age:'18-24', reach:18200, impressions:45200, spend:980},
+        {age:'25-34', reach:28400, impressions:78400, spend:1520},
+        {age:'35-44', reach:19600, impressions:51200, spend:1080},
+        {age:'45-54', reach:9800, impressions:23400, spend:520},
+        {age:'55-64', reach:4200, impressions:9800, spend:240},
+        {age:'65+', reach:1600, impressions:3200, spend:85}
+      ],
+      gender: [
+        {gender:'female', reach:47800, impressions:124000},
+        {gender:'male', reach:41200, impressions:108000}
+      ],
+      device: [
+        {device:'mobile', impressions:113100, reach:69420},
+        {device:'desktop', impressions:23200, reach:14240},
+        {device:'tablet', impressions:8700, reach:5340}
+      ]
+    }
   }
 }

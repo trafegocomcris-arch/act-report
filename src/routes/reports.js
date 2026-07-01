@@ -54,6 +54,20 @@ router.post('/generate', async (req, res) => {
       .eq('id', client_id)
       .single()
 
+    const { data: dash } = await supabase
+      .from('dashboards')
+      .select('config')
+      .eq('client_id', client_id)
+      .limit(1)
+      .maybeSingle()
+
+    const branding = {
+      logoUrl: dash?.config?.branding?.logoUrl,
+      primaryColor: dash?.config?.branding?.primaryColor,
+      accentColor: dash?.config?.branding?.accentColor,
+      companyName: dash?.config?.branding?.companyName,
+    }
+
     const metrics = await collectMetrics(client_id, channels)
 
     const insights = generateInsights(metrics)
@@ -64,7 +78,8 @@ router.post('/generate', async (req, res) => {
       meta: metrics.meta,
       googleAds: metrics.googleAds,
       analytics: metrics.analytics,
-      insights
+      insights,
+      branding
     })
 
     const shareToken = randomUUID().replace(/-/g, '').slice(0, 16)
